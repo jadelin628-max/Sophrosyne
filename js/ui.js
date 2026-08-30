@@ -91,37 +91,37 @@ Sophrosyne.UI = (function () {
     yuhuayuan:    [ { label: "本殿事务", targets: ["[data-venue-info=yuhuayuan]"] } ],
   };
 
-  // 宫殿布局（f=文件名, x/y=坐标, s=尺寸, l=标签, v=点击进入的视图）
+  // 宫殿交互点（x/y=中心, s=热点边长, l=标签, v=点击进入的视图）
   const PALACE = [
     // 中轴（北→南）
-    { f: "shenwumen", x: 290, y: 30, s: 60, l: "神武门" },
-    { f: "yuhuayuan", x: 275, y: 95, s: 90, l: "御花园", v: "yuhuayuan" },
-    { f: "kunninggong", x: 270, y: 210, s: 100, l: "坤宁宫", v: "kunninggong" },
-    { f: "jiaotaidian", x: 289, y: 330, s: 62, l: "交泰殿" },
-    { f: "qianqinggong", x: 260, y: 410, s: 120, l: "乾清宫", v: "court" },
-    { f: "qianqingmen", x: 275, y: 555, s: 90, l: "乾清门" },
-    { f: "baohe", x: 275, y: 665, s: 90, l: "保和殿", v: "baohe" },
-    { f: "zhonghedian", x: 289, y: 775, s: 62, l: "中和殿" },
-    { f: "taihedian", x: 255, y: 850, s: 130, l: "太和殿", v: "focus" },
-    { f: "taihemen", x: 275, y: 1000, s: 90, l: "太和门", v: "taihemen" },
-    { f: "wumen", x: 290, y: 1110, s: 60, l: "午门" },
-    // 西侧（慈宁宫入后宫·北）
-    { f: "cininggong", x: 46, y: 210, s: 76, l: "慈宁宫", flip: true },
-    { f: "yushanfang", x: 52, y: 330, s: 64, l: "御膳房", v: "yushanfang", flip: true },
-    { f: "neiweufu", x: 50, y: 440, s: 70, l: "内务府", v: "neiweufu", flip: true },
-    { f: "yangxindian", x: 52, y: 550, s: 78, l: "养心殿", v: "chain", flip: true },
-    { f: "junjichu", x: 42, y: 670, s: 82, l: "军机处", v: "policy" },
-    { f: "wuyingdian", x: 42, y: 800, s: 82, l: "武英殿", v: "wuyingdian" },
-    { f: "cehua_donghua", x: 6, y: 560, s: 44, l: "西华门", flip: true },
-    // 东侧（宁寿宫入后宫·北）
-    { f: "ningshougong", x: 520, y: 210, s: 76, l: "宁寿宫" },
-    { f: "qintianjian", x: 526, y: 330, s: 62, l: "钦天监", v: "qintianjian", flip: true },
-    { f: "changyinge", x: 524, y: 440, s: 64, l: "畅音阁", v: "changyinge" },
-    { f: "shangshufang", x: 518, y: 550, s: 72, l: "上书房", v: "shangshufang", flip: true },
-    { f: "taimiao", x: 510, y: 670, s: 90, l: "太庙", v: "history", flip: true },
-    { f: "wenhuadian", x: 522, y: 800, s: 84, l: "文华殿", v: "wenhuadian", flip: true },
-    { f: "wenyuange", x: 522, y: 920, s: 82, l: "文渊阁", v: "record", flip: true },
-    { f: "cehua_donghua", x: 594, y: 560, s: 44, l: "东华门", flip: true },
+    { x: 320, y: 55,  s: 70,  l: "神武门" },
+    { x: 320, y: 172, s: 96,  l: "御花园", v: "yuhuayuan" },
+    { x: 320, y: 352, s: 84,  l: "坤宁宫", v: "kunninggong" },
+    { x: 320, y: 432, s: 66,  l: "交泰殿" },
+    { x: 320, y: 482, s: 106, l: "乾清宫", v: "court" },
+    { x: 320, y: 552, s: 74,  l: "乾清门" },
+    { x: 320, y: 660, s: 90,  l: "保和殿", v: "baohe" },
+    { x: 320, y: 716, s: 66,  l: "中和殿" },
+    { x: 320, y: 860, s: 120, l: "太和殿", v: "focus" },
+    { x: 320, y: 1005, s: 84, l: "太和门", v: "taihemen" },
+    { x: 320, y: 1082, s: 84, l: "午门" },
+    // 西侧
+    { x: 118, y: 245, s: 78, l: "慈宁宫" },
+    { x: 116, y: 332, s: 66, l: "御膳房", v: "yushanfang" },
+    { x: 114, y: 442, s: 72, l: "内务府", v: "neiweufu" },
+    { x: 120, y: 552, s: 82, l: "养心殿", v: "chain" },
+    { x: 110, y: 662, s: 84, l: "军机处", v: "policy" },
+    { x: 110, y: 792, s: 84, l: "武英殿", v: "wuyingdian" },
+    { x: 56,  y: 572, s: 48, l: "西华门" },
+    // 东侧
+    { x: 540, y: 245, s: 78, l: "宁寿宫" },
+    { x: 546, y: 358, s: 66, l: "钦天监", v: "qintianjian" },
+    { x: 542, y: 442, s: 68, l: "畅音阁", v: "changyinge" },
+    { x: 536, y: 552, s: 76, l: "上书房", v: "shangshufang" },
+    { x: 530, y: 668, s: 94, l: "太庙", v: "history" },
+    { x: 546, y: 792, s: 88, l: "文华殿", v: "wenhuadian" },
+    { x: 546, y: 922, s: 86, l: "文渊阁", v: "record" },
+    { x: 598, y: 572, s: 48, l: "东华门" },
   ];
 
   function init(s, opts) {
@@ -136,22 +136,21 @@ Sophrosyne.UI = (function () {
   function renderPalace() {
     const svg = $("#palace-map");
     if (!svg) return;
-    let plinth = "";
+    // 单张俯视平面图铺满 viewBox
+    let html = '<rect x="0" y="0" width="640" height="1240" fill="#171310"/>' +
+      '<image href="assets/generated/palace_plan.webp" x="0" y="0" width="640" height="1240" preserveAspectRatio="none"/>';
+    // 各建筑：可点 → 交互热点 + 标签；装饰 → 仅标签
     for (const b of PALACE) {
-      plinth += '<rect x="' + (b.x - 6) + '" y="' + (b.y - 6) + '" width="' + (b.s + 12) + '" height="' + (b.s + 12) + '" rx="7" fill="#22160d" stroke="#6a4a26" stroke-width="2" opacity="0.94"/>';
-    }
-    svg.insertAdjacentHTML("beforeend", plinth);
-    let html = "";
-    for (const b of PALACE) {
-      const attr = b.v ? ' class="bldg" data-building="' + b.v + '"' : ' class="bldg-deco"';
-      html += '<g' + attr + '>';
-      if (b.flip) {
-        html += '<g transform="translate(' + (b.x + b.s) + ', ' + b.y + ') scale(-1,1)"><image href="assets/transparent/' + b.f + '.webp" x="0" y="0" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/></g>';
+      const cx = b.x - b.s / 2, cy = b.y - b.s / 2;
+      const tx = b.x, ty = b.y + b.s / 2 + 14;
+      if (b.v) {
+        html += '<g class="bldg" data-building="' + b.v + '">' +
+          '<rect class="hotspot" x="' + cx + '" y="' + cy + '" width="' + b.s + '" height="' + b.s + '" rx="7"/>' +
+          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#f6df9b" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke">' + b.l + '</text></g>';
       } else {
-        html += '<image href="assets/transparent/' + b.f + '.webp" x="' + b.x + '" y="' + b.y + '" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/>';
+        html += '<g class="bldg-deco">' +
+          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#c9a227" font-size="11" stroke="#1d1510" stroke-width="3" paint-order="stroke" opacity="0.85">' + b.l + '</text></g>';
       }
-      if (b.l) html += '<text x="' + (b.x + b.s / 2) + '" y="' + (b.y + b.s + 17) + '" text-anchor="middle" fill="#e8dcc3" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke">' + b.l + '</text>';
-      html += '</g>';
     }
     svg.insertAdjacentHTML("beforeend", html);
   }

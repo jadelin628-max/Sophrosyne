@@ -109,8 +109,10 @@ Sophrosyne.Store = (function () {
   }
 
   function deepMerge(def, src) {
-    if (Array.isArray(def) || Array.isArray(src)) return src;
-    if (typeof def === "object" && def !== null && typeof src === "object" && src !== null) {
+    if (src === null || src === undefined) return def;      // 旧档 null（如 log:null）回落默认，避免运行期 TypeError
+    if (Array.isArray(src)) return src;                     // 数组整取已存数据
+    if (Array.isArray(def)) return def;                     // 模板为数组而来源非数组：类型不符，用默认
+    if (typeof def === "object" && typeof src === "object") {
       const out = {};
       for (const k of Object.keys(def)) {
         if (k in src) out[k] = deepMerge(def[k], src[k]);
@@ -121,7 +123,7 @@ Sophrosyne.Store = (function () {
       }
       return out;
     }
-    return src === undefined ? def : src;
+    return src;
   }
 
   return { KEY, BACKUP_KEY, load, save, reset, revive, todayStr, defaultState, newChain };

@@ -151,5 +151,5 @@ Sophrosyne.LLM = (function () {
     return chat(state, prompt);
   }
 
-  return { settle, ask, posthumous, accession, chat, context, buildSettlePrompt, SYSTEM, config, metricLegend };
+  return { settle, ask, posthumous, accession, chat, context, buildSettlePrompt, extractJson, SYSTEM, config, metricLegend };
 })();

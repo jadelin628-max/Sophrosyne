@@ -1,17 +1,5 @@
 /* Sophrosyne — 引擎冒烟测试 v5（阶段 A + B） */
-global.window = globalThis;
-const mem = {};
-global.localStorage = {
-  getItem: (k) => (k in mem ? mem[k] : null),
-  setItem: (k, v) => { mem[k] = String(v); },
-  removeItem: (k) => { delete mem[k]; },
-};
-
-require("../js/metrics.js");
-require("../js/scenes.js");
-require("../js/store.js");
-require("../js/score.js");
-require("../js/engine.js");
+require("./_env.js");
 
 const E = globalThis.Sophrosyne.Engine;
 let state = E.init();

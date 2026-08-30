@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#241a12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sophrosyne" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Sophrosyne · 紫禁城</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <button id="settings-btn" class="gear" title="设置">⚙</button>
+
+  <header id="topbar">
+    <div class="brand">
+      <span class="seal">帝</span>
+      <div class="brand-text">
+        <div class="dynasty" id="dynasty-name">未定</div>
+        <div class="era" id="era-name">建元 · 在位第 1 年 · 春秋 18 岁</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="k">国库</span><span class="v" id="stat-treasury">—</span></div>
+      <div class="stat"><span class="k">民心</span><span class="v" id="stat-support">—</span></div>
+      <div class="stat"><span class="k">威望</span><span class="v" id="stat-prestige">—</span></div>
+      <div class="stat"><span class="k">勤政</span><span class="v" id="stat-main">0</span></div>
+    </div>
+  </header>
+
+  <!-- 可交互状态栏：预约 / 临朝 / 最近起居注 -->
+  <div id="statusbar" class="statusbar">
+    <div class="status-row" id="status-row" role="button" tabindex="0" title="点击查看详情">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-text" id="status-text">—</span>
+      <span class="status-timer" id="status-timer"></span>
+    </div>
+    <div class="status-actions">
+      <div id="status-focus-actions" class="row" hidden>
+        <button id="focus-complete" class="btn primary">功成 · 完成</button><button id="focus-abandon" class="btn danger">失守 · 违规</button>
+      </div>
+      <div id="status-appoint-actions" class="row" hidden>
+        <button id="appointment-fulfill" class="btn primary">履约 · 立即临朝</button><button id="appointment-miss" class="btn danger">失信（威望 -1）</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- 紫禁城俯视地图 -->
+    <section id="view-palace" class="view active">
+      <div class="palace-wrap">
+        <svg id="palace-map" viewBox="0 0 640 1240" xmlns="http://www.w3.org/2000/svg">
+          <defs><pattern id="pbase" patternUnits="userSpaceOnUse" width="300" height="300"><rect width="300" height="300" fill="#1f150d"/><image href="assets/generated/base_texture.png" width="300" height="300" opacity="0.55"/></pattern></defs>
+          <!-- 地面 -->
+          <rect x="0" y="0" width="640" height="1240" fill="url(#pbase)"/>
+          <!-- 宫墙 -->
+          <rect x="12" y="12" width="616" height="1216" rx="10" fill="none" stroke="#6a4a26" stroke-width="6"/>
+          <rect x="32" y="32" width="576" height="1176" fill="none" stroke="#4a3220" stroke-width="2" opacity="0.7"/>
+          <!-- 外朝/内廷分隔线（乾清门一线） -->
+          <rect x="70" y="548" width="500" height="3" fill="#4a3220" opacity="0.8"/>
+          <!-- 中央御道 -->
+          <rect x="319" y="34" width="2" height="1172" fill="#c9a227" opacity="0.55"/>
+          <!-- 横向甬道 -->
+          <g fill="#3a2a18" opacity="0.9">
+            <rect x="70" y="198" width="500" height="3" />
+            <rect x="70" y="318" width="500" height="3" />
+            <rect x="70" y="438" width="500" height="3" />
+            <rect x="70" y="558" width="500" height="3" />
+            <rect x="70" y="678" width="500" height="3" />
+            <rect x="70" y="798" width="500" height="3" />
+            <rect x="70" y="948" width="500" height="3" />
+            <rect x="70" y="1068" width="500" height="3" />
+          </g>
+          <!-- 西/东夹道 -->
+          <g fill="#3a2a18" opacity="0.9">
+            <rect x="128" y="60" width="3" height="1100" />
+            <rect x="512" y="60" width="3" height="1100" />
+          </g>
+          <text x="320" y="1216" text-anchor="middle" fill="#c9a227" font-size="11">午门</text>
+          <text x="320" y="26" text-anchor="middle" fill="#c9a227" font-size="11">神武门</text>
+          <!-- 台基与建筑由 js/palace 注入 -->
+        </svg>
+      </div>
+      <p class="hint center">点击宫殿进入对应殿宇，政务/事务按发生地分列各殿；右上角「⚙」为设置。</p>
+    </section>
+
+    <!-- 太和殿：外朝 · 临朝大典（勤政纪录） -->
+    <section id="view-focus" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="taihedian"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>主要政务（勤政 · 三三制）</h2><div id="chain-main"></div><div id="chain-main-precedents"></div></div>
+        <div class="panel"><h2>次要政务（常备）</h2><div id="chain-reserve"></div><div id="chain-reserve-precedents"></div></div>
+      </div>
+    </section>
+
+    <!-- 乾清宫：内廷 · 听政理政（国是总览） -->
+    <section id="view-court" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="qianqinggong"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>今日国是</h2><ul id="court-today" class="kv"></ul></div>
+        <div class="panel"><h2>国力各项</h2><div id="court-metrics" class="metric-list"></div></div>
+        <div class="panel"><h2>突发事件</h2><div id="event-status"></div></div>
+        <div class="panel"><h2>大目标（王朝敌人）</h2><div id="goal-list"></div></div>
+        <div class="panel"><h2>近闻（起居注摘）</h2><ul id="court-log" class="log"></ul></div>
+      </div>
+    </section>
+
+    <!-- 养心殿：修身 · 内务（圣躬属性） -->
+    <section id="view-chain" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="yangxindian"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>圣躬（个人属性）</h2><div id="court-attrs" class="metric-list"></div></div>
+      </div>
+    </section>
+
+    <!-- 军机处：军国 · 经略（典章制度） -->
+    <section id="view-policy" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="junjichu"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><div class="row between"><h2>典章制度树</h2></div><p class="hint" id="policy-add-hint"></p><div id="policy-tree" class="policy-tree"></div></div>
+      </div>
+    </section>
+
+    <!-- 文渊阁：文教 · 修典史馆（岁末结算 + 起居注） -->
+    <section id="view-record" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="wenyuange"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>岁末结算（一年一度）</h2><p class="hint" id="settle-hint"></p><p class="hint">未配置大模型时按场景默认增减；配置后交给大模型按真实任务风味化并决定增减。</p></div>
+        <div class="panel"><h2>起居注（本朝史官）</h2><ul id="full-log" class="log"></ul></div>
+      </div>
+    </section>
+
+    <!-- 武英殿：武备 · 操练（军事指标） -->
+    <section id="view-wuyingdian" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="wuyingdian"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>军备（军力各项）</h2><div id="wuying-metrics" class="metric-list"></div></div>
+      </div>
+    </section>
+
+    <!-- 御花园：颐养 · 风雅（后宫子嗣） -->
+    <section id="view-yuhuayuan" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="yuhuayuan"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>子嗣</h2><div id="heir-list"></div></div>
+      </div>
+    </section>
+
+    <!-- 太庙：祭祀 · 宗庙（实录 + 禅位） -->
+    <section id="view-history" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero">
+        <div class="hero-content">
+          <h2>太庙</h2>
+          <div class="hero-sub">祭祀 · 宗庙 · 历代实录</div>
+          <div class="hero-buttons venue-actions"><button class="act-btn danger" data-act="abdicate">禅位 / 驾崩</button></div>
+          <div class="info-buttons"><button class="info-btn" data-targets="#lineage">历代皇帝实录</button></div>
+        </div>
+      </div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="banner" id="abdicate-banner" hidden><p>圣寿已至，可择日<b>禅位 / 驾崩</b>。</p></div>
+        <div class="panel"><h2>太庙 · 历代皇帝实录</h2><div id="lineage"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="verdict-modal" class="modal" hidden>
+    <div class="modal-card"><h2>廷议 · 下必为例</h2><p id="verdict-context" class="context"></p>
+      <label class="field"><span>成例内容（选「下诏成例」时生效）</span><input id="verdict-text" type="text" placeholder="如：回复消息不算违规" /></label>
+      <div class="row"><button id="verdict-collapse" class="btn danger">① 废黜（清零）</button><button id="verdict-precedent" class="btn">② 下诏成例（永赦）</button></div>
+    </div>
+  </div>
+
+  <div id="policy-modal" class="modal" hidden>
+    <div class="modal-card"><h2>颁行制度</h2>
+      <label class="field"><span>制度名（真实规范）</span><input id="policy-name" type="text" placeholder="如：子时后不碰手机" /></label>
+      <label class="field"><span>分组（自拟）</span><input id="policy-group" type="text" placeholder="作息" /></label>
+      <label class="field"><span>风味描述（可选）</span><input id="policy-flavor" type="text" placeholder="如：城门宵禁，子时锁钥" /></label>
+      <label class="field"><span>挂于哪条制度之下（留空为根基）</span><select id="policy-parent"><option value="">（根基制度）</option></select></label>
+      <div class="row"><button id="policy-cancel" class="btn ghost">取消</button><button id="policy-save" class="btn primary">颁行</button></div>
+    </div>
+  </div>
+
+  <div id="abdicate-modal" class="modal" hidden>
+    <div class="modal-card"><h2>禅位 / 驾崩</h2><p class="context">结算谥号庙号、起居注变实录，新君继位；制度固化度保留。</p>
+      <label class="field"><span>谥号评定方式</span><select id="abdicate-mode"><option value="rule">按各指标增减自动评定</option><option value="llm">请大模型评定（需已配置）</option></select></label>
+      <label class="field"><span>继位人选</span><select id="abdicate-heir"><option value="">（无子嗣，宗室即位）</option></select></label>
+      <div class="row"><button id="abdicate-cancel" class="btn ghost">再等等</button><button id="abdicate-confirm" class="btn danger">确认禅位</button></div>
+    </div>
+  </div>
+
+  <div id="goal-modal" class="modal" hidden>
+    <div class="modal-card"><h2>立大志（王朝敌人）</h2>
+      <label class="field"><span>大目标（现实）</span><input id="goal-name" type="text" placeholder="如：考研上岸" /></label>
+      <label class="field"><span>敌人风味（可选）</span><input id="goal-flavor" type="text" placeholder="如：击退北方游牧" /></label>
+      <div class="row"><button id="goal-cancel" class="btn ghost">取消</button><button id="goal-save" class="btn primary">立大志</button></div>
+    </div>
+  </div>
+
+  <div id="event-modal" class="modal" hidden>
+    <div class="modal-card"><h2>报备突发事件</h2>
+      <label class="field"><span>事件描述</span><input id="event-text" type="text" placeholder="如：偶感风寒，数日无法视事" /></label>
+      <div class="row"><button id="event-cancel" class="btn ghost">取消</button><button id="event-enter" class="btn danger">进入非常时期</button></div>
+    </div>
+  </div>
+
+  <div id="subgoal-modal" class="modal" hidden>
+    <div class="modal-card"><h2>分解阶段目标</h2>
+      <label class="field"><span>阶段目标名</span><input id="subgoal-name" type="text" placeholder="如：每日背单词" /></label>
+      <div class="field"><span>评判标准（可多选，全部达成即完成）</span>
+        <div id="subgoal-criteria"></div>
+        <button id="subgoal-add-criterion" class="btn ghost" style="width:100%">＋ 添加一条标准</button>
+      </div>
+      <div class="row"><button id="subgoal-cancel" class="btn ghost">取消</button><button id="subgoal-save" class="btn primary">分解</button></div>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal" hidden>
+    <div class="modal-card"><h2>设置</h2>
+      <label class="field"><span>国号</span><input id="set-dynasty" type="text" /></label>
+      <label class="field"><span>年号</span><input id="set-era" type="text" /></label>
+      <div class="row"><button id="settings-cancel" class="btn ghost">取消</button><button id="settings-save" class="btn primary">保存</button></div>
+      <hr class="sep" />
+      <h3 class="sub">大模型（史官 AI，可选）</h3>
+      <label class="field"><span>Base URL（OpenAI 兼容）</span><input id="set-llm-base" type="text" placeholder="https://api.openai.com/v1" /></label>
+      <label class="field"><span>API Key</span><input id="set-llm-key" type="password" placeholder="sk-..." /></label>
+      <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
+      <hr class="sep" />
+      <div class="row"><button id="export-btn" class="btn">导出存档</button><button id="import-btn" class="btn">导入存档</button><input id="import-file" type="file" accept="application/json" hidden /></div>
+      <button id="reset-btn" class="btn danger" style="width:100%">重置存档（清空全部数据）</button>
+    </div>
+  </div>
+
+  <div id="llm-modal" class="modal" hidden>
+    <div class="modal-card"><h2>请史官</h2>
+      <label class="field"><span>任务</span><select id="llm-task"><option value="diary">今日起居评语</option><option value="review">朝政复盘建议</option><option value="posthumous">盖棺定论（谥号评语）</option></select></label>
+      <button id="llm-ask" class="btn primary" style="width:100%">召唤史官</button>
+      <div id="llm-result" class="llm-result" hidden></div>
+      <div class="row" id="llm-actions" hidden><button id="llm-close" class="btn ghost">关闭</button><button id="llm-append" class="btn">采纳入起居注</button></div>
+    </div>
+  </div>
+
+  <div id="setup-modal" class="modal" hidden>
+    <div class="modal-card"><h2>开国建制</h2><p class="context">新朝肇建，请定国号与年号。</p>
+      <label class="field"><span>国号</span><input id="setup-dynasty" type="text" placeholder="如：大夏" /></label>
+      <label class="field"><span>年号</span><input id="setup-era" type="text" placeholder="如：建元" /></label>
+      <button id="setup-save" class="btn primary" style="width:100%">开国</button>
+    </div>
+  </div>
+
+  <script src="js/metrics.js"></script>
+  <script src="js/scenes.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/score.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/llm.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#2b1d14"/>
+  <rect x="9" y="9" width="110" height="110" rx="18" fill="none" stroke="#c9a227" stroke-width="3"/>
+  <text x="64" y="86" font-family="serif" font-size="62" fill="#c0392b" text-anchor="middle" font-weight="bold">帝</text>
+</svg>

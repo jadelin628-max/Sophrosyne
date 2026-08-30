@@ -1,0 +1,14 @@
+# 依赖与构建产物
+node_modules/
+*.log
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.zcode/
+
+# 临时与备份文件
+*.bak
+*.tmp
+*~

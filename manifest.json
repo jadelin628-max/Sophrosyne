@@ -1,0 +1,17 @@
+{
+  "name": "Sophrosyne · 临朝",
+  "short_name": "Sophrosyne",
+  "description": "以古代皇帝临朝治国为题材的个人自控应用（基于 CTDP 与 RSIP）。",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f1712",
+  "theme_color": "#2b1d14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

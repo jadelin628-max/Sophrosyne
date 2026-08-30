@@ -42,22 +42,34 @@ Sophrosyne.UI = (function () {
 
   // 各殿宇（场馆）说明与一级动作按钮
   const VENUES = {
-    taihedian:    { name: "太和殿", sub: "外朝 · 临朝大典" },
+    taihemen:     { name: "太和门", sub: "外朝 · 御门听政" },
+    taihedian:    { name: "太和殿", sub: "外朝 · 大典营造" },
+    baohe:        { name: "保和殿", sub: "外朝 · 殿试取士" },
     qianqinggong: { name: "乾清宫", sub: "内廷 · 听政理政" },
-    yangxindian:  { name: "养心殿", sub: "修身 · 内务" },
     junjichu:     { name: "军机处", sub: "军国 · 经略" },
-    wenyuange:    { name: "文渊阁", sub: "文教 · 修典史馆" },
+    wenhuadian:   { name: "文华殿", sub: "文教 · 经筵讲学" },
     wuyingdian:   { name: "武英殿", sub: "武备 · 操练" },
+    wenyuange:    { name: "文渊阁", sub: "文教 · 修典史馆" },
+    yangxindian:  { name: "养心殿", sub: "修身 · 内务" },
+    kunninggong:  { name: "坤宁宫", sub: "后宫 · 琴瑟" },
+    neiweufu:     { name: "内务府", sub: "内廷 · 理财" },
+    yushanfang:   { name: "御膳房", sub: "内廷 · 药膳" },
+    shangshufang: { name: "上书房", sub: "内廷 · 育才" },
+    qintianjian:  { name: "钦天监", sub: "内廷 · 历法祭祀" },
+    changyinge:   { name: "畅音阁", sub: "内廷 · 宴乐" },
     yuhuayuan:    { name: "御花园", sub: "颐养 · 风雅" },
   };
   const VENUE_ACTIONS = {
     qianqinggong: [ { label: "报备突发事件", act: "event" }, { label: "立大志", act: "goal" } ],
     junjichu:     [ { label: "颁行制度", act: "policy-add" } ],
-    wenyuange:    [ { label: "岁末结算", act: "settle" }, { label: "史官 AI", act: "llm" } ],
+    wenyuange:    [ { label: "史官 AI", act: "llm" } ],
+    qintianjian:  [ { label: "岁末结算", act: "settle" } ],
   };
   // 二级详情面板（默认收起）：每个场馆的信息按钮 → 展开对应面板
   const VENUE_INFO = {
+    taihemen:     [ { label: "本殿事务", targets: ["[data-venue-info=taihemen]"] } ],
     taihedian:    [ { label: "勤政纪录", targets: ["#chain-main", "#chain-reserve"] } ],
+    baohe:        [ { label: "本殿事务", targets: ["[data-venue-info=baohe]"] } ],
     qianqinggong: [
       { label: "今日国是", targets: ["#court-today"] },
       { label: "国力各项", targets: ["#court-metrics"] },
@@ -65,11 +77,18 @@ Sophrosyne.UI = (function () {
       { label: "大目标", targets: ["#goal-list"] },
       { label: "近闻", targets: ["#court-log"] },
     ],
-    yangxindian:  [ { label: "圣躬属性", targets: ["#court-attrs"] } ],
     junjichu:     [ { label: "典章制度树", targets: ["#policy-tree"] } ],
-    wenyuange:    [ { label: "起居注与结算", targets: ["#settle-hint", "#full-log"] } ],
+    wenhuadian:   [ { label: "本殿事务", targets: ["[data-venue-info=wenhuadian]"] } ],
     wuyingdian:   [ { label: "军备", targets: ["#wuying-metrics"] } ],
-    yuhuayuan:    [ { label: "子嗣", targets: ["#heir-list"] } ],
+    wenyuange:    [ { label: "起居注", targets: ["#full-log"] } ],
+    yangxindian:  [ { label: "圣躬属性", targets: ["#court-attrs"] } ],
+    kunninggong:  [ { label: "本殿事务", targets: ["[data-venue-info=kunninggong]"] } ],
+    neiweufu:     [ { label: "本殿事务", targets: ["[data-venue-info=neiweufu]"] } ],
+    yushanfang:   [ { label: "本殿事务", targets: ["[data-venue-info=yushanfang]"] } ],
+    shangshufang: [ { label: "子嗣", targets: ["#heir-list"] } ],
+    qintianjian:  [ { label: "岁末结算", targets: ["#settle-hint"] } ],
+    changyinge:   [ { label: "本殿事务", targets: ["[data-venue-info=changyinge]"] } ],
+    yuhuayuan:    [ { label: "本殿事务", targets: ["[data-venue-info=yuhuayuan]"] } ],
   };
 
   // 宫殿布局（f=文件名, x/y=坐标, s=尺寸, l=标签, v=点击进入的视图）
@@ -77,30 +96,30 @@ Sophrosyne.UI = (function () {
     // 中轴（北→南）
     { f: "shenwumen", x: 290, y: 30, s: 60, l: "神武门" },
     { f: "yuhuayuan", x: 275, y: 95, s: 90, l: "御花园", v: "yuhuayuan" },
-    { f: "kunninggong", x: 270, y: 210, s: 100, l: "坤宁宫" },
+    { f: "kunninggong", x: 270, y: 210, s: 100, l: "坤宁宫", v: "kunninggong" },
     { f: "jiaotaidian", x: 289, y: 330, s: 62, l: "交泰殿" },
     { f: "qianqinggong", x: 260, y: 410, s: 120, l: "乾清宫", v: "court" },
     { f: "qianqingmen", x: 275, y: 555, s: 90, l: "乾清门" },
-    { f: "baohe", x: 275, y: 665, s: 90, l: "保和殿" },
+    { f: "baohe", x: 275, y: 665, s: 90, l: "保和殿", v: "baohe" },
     { f: "zhonghedian", x: 289, y: 775, s: 62, l: "中和殿" },
     { f: "taihedian", x: 255, y: 850, s: 130, l: "太和殿", v: "focus" },
-    { f: "taihemen", x: 275, y: 1000, s: 90, l: "太和门" },
+    { f: "taihemen", x: 275, y: 1000, s: 90, l: "太和门", v: "taihemen" },
     { f: "wumen", x: 290, y: 1110, s: 60, l: "午门" },
     // 西侧（慈宁宫入后宫·北）
     { f: "cininggong", x: 46, y: 210, s: 76, l: "慈宁宫", flip: true },
-    { f: "yushanfang", x: 52, y: 330, s: 64, l: "御膳房", flip: true },
-    { f: "neiweufu", x: 50, y: 440, s: 70, l: "内务府", flip: true },
+    { f: "yushanfang", x: 52, y: 330, s: 64, l: "御膳房", v: "yushanfang", flip: true },
+    { f: "neiweufu", x: 50, y: 440, s: 70, l: "内务府", v: "neiweufu", flip: true },
     { f: "yangxindian", x: 52, y: 550, s: 78, l: "养心殿", v: "chain", flip: true },
     { f: "junjichu", x: 42, y: 670, s: 82, l: "军机处", v: "policy" },
     { f: "wuyingdian", x: 42, y: 800, s: 82, l: "武英殿", v: "wuyingdian" },
     { f: "cehua_donghua", x: 6, y: 560, s: 44, l: "西华门", flip: true },
     // 东侧（宁寿宫入后宫·北）
     { f: "ningshougong", x: 520, y: 210, s: 76, l: "宁寿宫" },
-    { f: "qintianjian", x: 526, y: 330, s: 62, l: "钦天监", flip: true },
-    { f: "changyinge", x: 524, y: 440, s: 64, l: "畅音阁" },
-    { f: "shangshufang", x: 518, y: 550, s: 72, l: "上书房", flip: true },
+    { f: "qintianjian", x: 526, y: 330, s: 62, l: "钦天监", v: "qintianjian", flip: true },
+    { f: "changyinge", x: 524, y: 440, s: 64, l: "畅音阁", v: "changyinge" },
+    { f: "shangshufang", x: 518, y: 550, s: 72, l: "上书房", v: "shangshufang", flip: true },
     { f: "taimiao", x: 510, y: 670, s: 90, l: "太庙", v: "history", flip: true },
-    { f: "wenhuadian", x: 522, y: 800, s: 84, l: "文华殿", flip: true },
+    { f: "wenhuadian", x: 522, y: 800, s: 84, l: "文华殿", v: "wenhuadian", flip: true },
     { f: "wenyuange", x: 522, y: 920, s: 82, l: "文渊阁", v: "record", flip: true },
     { f: "cehua_donghua", x: 594, y: 560, s: 44, l: "东华门", flip: true },
   ];
@@ -154,7 +173,7 @@ Sophrosyne.UI = (function () {
       const infoBtns = (VENUE_INFO[key] || []).map(i => '<button class="info-btn" data-targets="' + i.targets.join(",") + '">' + i.label + '</button>').join("");
       el.innerHTML =
         '<h2>' + v.name + '</h2>' +
-        '<div class="hero-sub">' + v.sub + ' · ' + scenes.length + ' 项事务</div>' +
+        '<div class="hero-sub">' + v.sub + (scenes.length ? ' · ' + scenes.length + ' 项事务' : '') + '</div>' +
         '<div class="venue-scenes">' + sceneBtns + '</div>' +
         '<div class="venue-pick" hidden>' +
           '<div class="chain-picker"><button class="chain-toggle" data-chain="main">主要政务</button><button class="chain-toggle" data-chain="reserve">次要政务</button></div>' +
@@ -191,11 +210,12 @@ Sophrosyne.UI = (function () {
     renderStatusBar();
     renderCourt();           // 乾清宫：国是 / 国力 / 事件 / 目标 / 近闻
     renderAttrs($("#court-attrs"));   // 养心殿：圣躬属性
-    renderHeirs($("#heir-list"));     // 御花园：子嗣
+    renderHeirs($("#heir-list"));     // 上书房：子嗣
     renderMilitary();         // 武英殿：军备
     renderChain();            // 太和殿：主要/次要政务链
     renderPolicy();           // 军机处：典章制度
-    renderRecord();           // 文渊阁：岁末结算 / 起居注
+    renderRecord();           // 文渊阁：起居注
+    Object.keys(VENUES).forEach(renderVenueInfo);  // 各殿「本殿事务」说明
     renderHistory();          // 太庙：实录
   }
 
@@ -275,6 +295,17 @@ Sophrosyne.UI = (function () {
     const all = metricDisplay();
     const keys = ["army", "training", "equipment"];
     el.innerHTML = keys.map(k => { const m = all[k]; return '<div class="metric-row"><span class="m-name">' + m.name + '</span><span class="m-val">' + fmtNum(m.value) + (m.unit ? " " + m.unit : "") + '</span></div>'; }).join("");
+  }
+  function renderVenueInfo(key) {
+    const el = document.querySelector('[data-venue-info="' + key + '"]');
+    if (!el) return;
+    const scenes = Scenes.byVenue(key);
+    el.innerHTML = scenes.map(c =>
+      '<div class="scene-desc"><b>' + escapeHtml(c.name) + '</b>' +
+      '<div class="hint">' + escapeHtml(c.gov) + '</div>' +
+      '<div class="hint">预约：' + escapeHtml(c.appointment) + '</div>' +
+      '<div class="hint">' + escapeHtml(Engine.describeEffects(c.defaultEffects) || "无默认增减") + '</div></div>'
+    ).join("") || '<p class="hint">本殿无事务。</p>';
   }
   function renderAttrs(el) {
     if (!el) return;

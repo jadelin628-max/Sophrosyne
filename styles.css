@@ -230,6 +230,11 @@ body {
 .subgoal-crit { font-size: 11px; color: var(--ink-dim); padding-left: 16px; }
 .subgoal-crit.ok { color: var(--jade); }
 
+/* 本殿事务说明（单场景/专项场馆的详情面板） */
+.scene-desc { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.scene-desc:last-child { border-bottom: none; }
+.scene-desc b { color: var(--gold); }
+
 /* 阶段目标评判标准（多选） */
 .criterion { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
 .criterion select, .criterion input { flex: 1; min-width: 0; }
@@ -264,6 +269,15 @@ body {
 #view-history { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taimiao.webp"); }
 #view-wuyingdian { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
 #view-yuhuayuan  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yuhuayuan.webp"); }
+#view-taihemen   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
+#view-baohe      { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
+#view-wenhuadian { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_wenyuange.webp"); }
+#view-kunninggong { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_qianqinggong.webp"); }
+#view-neiweufu   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yangxindian.webp"); }
+#view-yushanfang { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yuhuayuan.webp"); }
+#view-changyinge { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yuhuayuan.webp"); }
+#view-shangshufang { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_wenyuange.webp"); }
+#view-qintianjian { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taimiao.webp"); }
 .view-hero { margin-bottom: 10px; }
 .hero-content h2 { color: var(--gold); font-size: 24px; letter-spacing: 3px; text-shadow: 0 2px 8px rgba(0,0,0,0.95); margin: 0 0 6px; }
 .hero-sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }

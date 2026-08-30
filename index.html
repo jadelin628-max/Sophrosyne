@@ -131,12 +131,11 @@
       </div>
     </section>
 
-    <!-- 文渊阁：文教 · 修典史馆（岁末结算 + 起居注） -->
+    <!-- 文渊阁：文教 · 修典史馆（起居注） -->
     <section id="view-record" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="wenyuange"></div>
       <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>岁末结算（一年一度）</h2><p class="hint" id="settle-hint"></p><p class="hint">未配置大模型时按场景默认增减；配置后交给大模型按真实任务风味化并决定增减。</p></div>
         <div class="panel"><h2>起居注（本朝史官）</h2><ul id="full-log" class="log"></ul></div>
       </div>
     </section>
@@ -150,12 +149,93 @@
       </div>
     </section>
 
-    <!-- 御花园：颐养 · 风雅（后宫子嗣） -->
+    <!-- 御花园：颐养 · 风雅 -->
     <section id="view-yuhuayuan" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="yuhuayuan"></div>
       <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="yuhuayuan"></div></div>
+      </div>
+    </section>
+
+    <!-- 太和门：外朝 · 御门听政 -->
+    <section id="view-taihemen" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="taihemen"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="taihemen"></div></div>
+      </div>
+    </section>
+
+    <!-- 保和殿：外朝 · 殿试取士 -->
+    <section id="view-baohe" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="baohe"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="baohe"></div></div>
+      </div>
+    </section>
+
+    <!-- 文华殿：文教 · 经筵讲学 -->
+    <section id="view-wenhuadian" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="wenhuadian"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="wenhuadian"></div></div>
+      </div>
+    </section>
+
+    <!-- 坤宁宫：后宫 · 琴瑟 -->
+    <section id="view-kunninggong" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="kunninggong"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="kunninggong"></div></div>
+      </div>
+    </section>
+
+    <!-- 内务府：内廷 · 理财 -->
+    <section id="view-neiweufu" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="neiweufu"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="neiweufu"></div></div>
+      </div>
+    </section>
+
+    <!-- 御膳房：内廷 · 药膳 -->
+    <section id="view-yushanfang" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="yushanfang"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="yushanfang"></div></div>
+      </div>
+    </section>
+
+    <!-- 畅音阁：内廷 · 宴乐 -->
+    <section id="view-changyinge" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="changyinge"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>本殿事务</h2><div data-venue-info="changyinge"></div></div>
+      </div>
+    </section>
+
+    <!-- 上书房：内廷 · 育才（子嗣） -->
+    <section id="view-shangshufang" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="shangshufang"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
         <div class="panel"><h2>子嗣</h2><div id="heir-list"></div></div>
+      </div>
+    </section>
+
+    <!-- 钦天监：内廷 · 历法祭祀（岁末结算） -->
+    <section id="view-qintianjian" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="qintianjian"></div>
+      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
+        <div class="panel"><h2>岁末结算（一年一度）</h2><p class="hint" id="settle-hint"></p><p class="hint">未配置大模型时按场景默认增减；配置后交给大模型按真实任务风味化并决定增减。</p></div>
       </div>
     </section>
 

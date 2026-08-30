@@ -1,9 +1,14 @@
 /* Sophrosyne — 启动入口 */
 (function () {
+  const APP_VERSION = "0.4.0";
+  window.Sophrosyne.APP_VERSION = APP_VERSION;
+
   function boot() {
     const fresh = !localStorage.getItem(Sophrosyne.Store.KEY);
     const state = Sophrosyne.Engine.init();
     Sophrosyne.UI.init(state, { firstRun: fresh });
+    const v = document.getElementById("app-version");
+    if (v) v.textContent = "版本 " + APP_VERSION;
   }
 
   function registerSW() {

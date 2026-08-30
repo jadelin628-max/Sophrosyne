@@ -24,8 +24,8 @@ assert(Score.posthumousName({ total: 20, gov: 20, sys: 50, attr: 50, years: 5 })
 assert(Score.posthumousName({ total: 10, gov: 10, sys: 50, attr: 50, years: 5 }) === "悼", "total<20 → 悼");
 
 console.log("[2] 谥号：在位 ≥ 20 年档位");
-assert(Score.posthumousName({ total: 15, gov: 15, sys: 10, attr: 20, years: 25 }) === "幽", "total<25 且属性不低 → 幽");
-assert(Score.posthumousName({ total: 15, gov: 15, sys: 10, attr: 25, years: 25 }) === "幽", "total<25 且 attr≥30 → 幽");
+assert(Score.posthumousName({ total: 15, gov: 15, sys: 10, attr: 20, years: 25 }) === "荒", "total<25 且属性低 → 荒");
+assert(Score.posthumousName({ total: 15, gov: 15, sys: 10, attr: 40, years: 25 }) === "幽", "total<25 且 attr≥30 → 幽");
 assert(Score.posthumousName({ total: 30, gov: 30, sys: 30, attr: 50, years: 25 }) === "惠", "25≤total<45 → 惠");
 assert(Score.posthumousName({ total: 60, gov: 50, sys: 70, attr: 60, years: 25 }) === "文", "sys 最高 → 文");
 assert(Score.posthumousName({ total: 60, gov: 70, sys: 50, attr: 60, years: 25 }) === "武", "gov 最高 → 武");

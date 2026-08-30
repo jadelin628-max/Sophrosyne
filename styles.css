@@ -36,7 +36,7 @@ body {
 .brand { display: flex; gap: 10px; align-items: center; }
 .seal {
   width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center;
-  background: url("assets/transparent/ui_jade_seal.png") center/cover no-repeat, var(--verm);
+  background: url("assets/transparent/ui_jade_seal.webp") center/cover no-repeat, var(--verm);
   color: transparent; border-radius: 8px; font-size: 22px; font-weight: bold;
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
@@ -62,7 +62,7 @@ body {
 .view { display: none; }
 .view.active { display: block; }
 .panel {
-  background: url("assets/transparent/panel_wide.png") center / 100% 100% no-repeat, #281a10;
+  background: url("assets/transparent/panel_wide.webp") center / 100% 100% no-repeat, #281a10;
   border: 1px solid var(--gold); border-radius: var(--radius);
   padding: 14px 18px; margin-bottom: 12px;
 }
@@ -91,12 +91,12 @@ body {
 /* 按钮（鎏金令牌） */
 .btn {
   padding: 9px 16px; border: none; color: #f6df9b; font-weight: 700;
-  background: url("assets/transparent/ui_gold_button.png") center/100% 100% no-repeat;
+  background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat;
   border-radius: var(--radius); cursor: pointer; font-family: var(--font); font-size: 14px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.55);
 }
 .btn:hover { filter: brightness(1.12); }
-.btn.primary { background: url("assets/transparent/ui_gold_button.png") center/100% 100% no-repeat; color: #f6df9b; font-weight: 700; }
+.btn.primary { background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat; color: #f6df9b; font-weight: 700; }
 .btn.danger { background: var(--verm); color: #fff; border: none; }
 .btn.ghost { background: transparent; color: var(--ink-dim); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -309,14 +309,14 @@ body {
 
 /* 宫殿视图：整屏室内背景 + 一级按钮 → 点击展开详情 */
 .palace-view { padding: 12px; min-height: 88vh; background-size: cover; background-position: center; background-attachment: fixed; }
-#view-court   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_qianqinggong.png"); }
-#view-focus   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.png"); }
-#view-chain   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yangxindian.png"); }
-#view-policy  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_junjichu.png"); }
-#view-record  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_wenyuange.png"); }
-#view-history { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taimiao.png"); }
-#view-wuyingdian { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.png"); }
-#view-yuhuayuan  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yuhuayuan.png"); }
+#view-court   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_qianqinggong.webp"); }
+#view-focus   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
+#view-chain   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yangxindian.webp"); }
+#view-policy  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_junjichu.webp"); }
+#view-record  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_wenyuange.webp"); }
+#view-history { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taimiao.webp"); }
+#view-wuyingdian { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
+#view-yuhuayuan  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yuhuayuan.webp"); }
 .view-hero { margin-bottom: 10px; }
 .hero-content h2 { color: var(--gold); font-size: 24px; letter-spacing: 3px; text-shadow: 0 2px 8px rgba(0,0,0,0.95); margin: 0 0 6px; }
 .hero-sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }

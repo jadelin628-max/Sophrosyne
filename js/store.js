@@ -28,7 +28,7 @@ Sophrosyne.Store = (function () {
         lifeSpan: null,              // 寿命（登基时按四因子公式计算）
         eventMode: null,             // 突发事件状态：null 或 { active, since }
         metrics: initM,              // 20 项存量国力
-        baseline: initM,             // 登基快照（供增减结算）
+        baseline: Metrics ? Metrics.initialMetrics() : {}, // 登基快照（供增减结算），须与 metrics 各自独立
         attributes: { health: 50, energy: 50, talent: 50, intellect: 50, composure: 50, charm: 50, prestige: 50 },
         bonuses: null,               // 制度反哺缓存
         eventPrecedents: [],         // 突发事件成例

@@ -127,9 +127,9 @@ Sophrosyne.UI = (function () {
       const attr = b.v ? ' class="bldg" data-building="' + b.v + '"' : ' class="bldg-deco"';
       html += '<g' + attr + '>';
       if (b.flip) {
-        html += '<g transform="translate(' + (b.x + b.s) + ', ' + b.y + ') scale(-1,1)"><image href="assets/transparent/' + b.f + '.png" x="0" y="0" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/></g>';
+        html += '<g transform="translate(' + (b.x + b.s) + ', ' + b.y + ') scale(-1,1)"><image href="assets/transparent/' + b.f + '.webp" x="0" y="0" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/></g>';
       } else {
-        html += '<image href="assets/transparent/' + b.f + '.png" x="' + b.x + '" y="' + b.y + '" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/>';
+        html += '<image href="assets/transparent/' + b.f + '.webp" x="' + b.x + '" y="' + b.y + '" width="' + b.s + '" height="' + b.s + '" preserveAspectRatio="xMidYMid meet"/>';
       }
       if (b.l) html += '<text x="' + (b.x + b.s / 2) + '" y="' + (b.y + b.s + 17) + '" text-anchor="middle" fill="#e8dcc3" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke">' + b.l + '</text>';
       html += '</g>';

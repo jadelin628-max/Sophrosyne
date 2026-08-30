@@ -94,49 +94,49 @@ Sophrosyne.UI = (function () {
   // 宫殿交互点（x/y=中心, s=热点边长, l=标签, v=点击进入的视图）——按精确紫禁城平面图对位
   const PALACE = [
     // 中轴（北→南）
-    { x: 320, y: 81,  s: 70,  l: "神武门" },
-    { x: 320, y: 198, s: 70,  l: "御花园", v: "yuhuayuan" },
-    { x: 320, y: 310, s: 64,  l: "坤宁宫", v: "kunninggong" },
-    { x: 320, y: 384, s: 62,  l: "交泰殿" },
-    { x: 320, y: 471, s: 78,  l: "乾清宫", v: "court" },
-    { x: 320, y: 546, s: 66,  l: "乾清门" },
-    { x: 320, y: 632, s: 68,  l: "保和殿", v: "baohe" },
-    { x: 320, y: 707, s: 62,  l: "中和殿" },
-    { x: 320, y: 806, s: 90,  l: "太和殿", v: "focus" },
-    { x: 320, y: 967, s: 66,  l: "太和门", v: "taihemen" },
+    { x: 320, y: 81, s: 70, l: "神武门" },
+    { x: 320, y: 198, s: 56, l: "御花园", v: "yuhuayuan" },
+    { x: 320, y: 310, s: 51, l: "坤宁宫", v: "kunninggong" },
+    { x: 320, y: 384, s: 62, l: "交泰殿" },
+    { x: 320, y: 471, s: 62, l: "乾清宫", v: "court" },
+    { x: 320, y: 546, s: 66, l: "乾清门" },
+    { x: 320, y: 632, s: 54, l: "保和殿", v: "baohe" },
+    { x: 320, y: 707, s: 62, l: "中和殿" },
+    { x: 320, y: 806, s: 72, l: "太和殿", v: "focus" },
+    { x: 320, y: 967, s: 53, l: "太和门", v: "taihemen" },
     { x: 320, y: 1141, s: 80, l: "午门" },
     // 西侧（内廷·西六宫贴坤宁宫两翼/养心殿/军机处/隆宗门；外朝·武英殿/弘义阁；服务·御膳房/内务府）
     { x: 105, y: 190, s: 64, l: "慈宁宫" },
     { x: 185, y: 240, s: 42, l: "永寿宫" },
-    { x: 208, y: 240, s: 42, l: "翊坤宫" },
+    { x: 228, y: 240, s: 42, l: "翊坤宫" },
     { x: 185, y: 314, s: 42, l: "储秀宫" },
-    { x: 208, y: 314, s: 42, l: "咸福宫" },
+    { x: 228, y: 314, s: 42, l: "咸福宫" },
     { x: 185, y: 388, s: 42, l: "长春宫" },
-    { x: 208, y: 388, s: 42, l: "太极殿" },
-    { x: 198, y: 436, s: 58,  l: "养心殿", v: "chain" },
-    { x: 200, y: 520, s: 44,  l: "军机处", v: "policy" },
-    { x: 240, y: 590, s: 38,  l: "隆宗门" },
-    { x: 160, y: 750, s: 42,  l: "弘义阁" },
-    { x: 102, y: 746, s: 64,  l: "武英殿", v: "wuyingdian" },
-    { x: 120, y: 480, s: 44,  l: "御膳房", v: "yushanfang" },
-    { x: 120, y: 560, s: 46,  l: "内务府", v: "neiweufu" },
-    { x: 42,  y: 706, s: 38,  l: "西华门" },
+    { x: 228, y: 388, s: 42, l: "太极殿" },
+    { x: 218, y: 436, s: 46, l: "养心殿", v: "chain" },
+    { x: 200, y: 520, s: 36, l: "军机处", v: "policy" },
+    { x: 240, y: 590, s: 38, l: "隆宗门" },
+    { x: 160, y: 750, s: 42, l: "弘义阁" },
+    { x: 102, y: 746, s: 51, l: "武英殿", v: "wuyingdian" },
+    { x: 120, y: 480, s: 36, l: "御膳房", v: "yushanfang" },
+    { x: 120, y: 560, s: 37, l: "内务府", v: "neiweufu" },
+    { x: 42, y: 706, s: 38, l: "西华门" },
     // 东侧（内廷·东六宫贴坤宁宫两翼/奉先殿/上书房/景运门/宁寿宫/畅音阁/钦天监；外朝·文华殿/文渊阁/体仁阁）
     { x: 535, y: 190, s: 70, l: "宁寿宫" },
-    { x: 432, y: 240, s: 42, l: "景仁宫" },
+    { x: 412, y: 240, s: 42, l: "景仁宫" },
     { x: 455, y: 240, s: 42, l: "承乾宫" },
-    { x: 432, y: 314, s: 42, l: "钟粹宫" },
+    { x: 412, y: 314, s: 42, l: "钟粹宫" },
     { x: 455, y: 314, s: 42, l: "景阳宫" },
-    { x: 432, y: 388, s: 42, l: "永和宫" },
+    { x: 412, y: 388, s: 42, l: "永和宫" },
     { x: 455, y: 388, s: 42, l: "延禧宫" },
-    { x: 438, y: 426, s: 52, l: "奉先殿", v: "history" },
-    { x: 480, y: 496, s: 48, l: "上书房", v: "shangshufang" },
+    { x: 418, y: 426, s: 42, l: "奉先殿", v: "history" },
+    { x: 480, y: 496, s: 38, l: "上书房", v: "shangshufang" },
     { x: 400, y: 590, s: 38, l: "景运门" },
-    { x: 512, y: 302, s: 44, l: "畅音阁", v: "changyinge" },
-    { x: 550, y: 620, s: 46, l: "钦天监", v: "qintianjian" },
+    { x: 512, y: 302, s: 36, l: "畅音阁", v: "changyinge" },
+    { x: 550, y: 620, s: 37, l: "钦天监", v: "qintianjian" },
     { x: 460, y: 744, s: 42, l: "体仁阁" },
-    { x: 532, y: 760, s: 58, l: "文渊阁", v: "record" },
-    { x: 480, y: 992, s: 64, l: "文华殿", v: "wenhuadian" },
+    { x: 532, y: 760, s: 46, l: "文渊阁", v: "record" },
+    { x: 480, y: 992, s: 51, l: "文华殿", v: "wenhuadian" },
     { x: 598, y: 706, s: 38, l: "东华门" },
   ];
 
@@ -175,7 +175,7 @@ Sophrosyne.UI = (function () {
       if (b.v) {
         html += '<g class="bldg" data-building="' + b.v + '">' +
           '<rect class="hotspot" x="' + cx + '" y="' + cy + '" width="' + b.s + '" height="' + b.s + '" rx="7"/>' +
-          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#f6df9b" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke">' + b.l + '</text></g>';
+          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#f6df9b" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke" pointer-events="none">' + b.l + '</text></g>';
       } else {
         html += '<g class="bldg-deco">' +
           '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#c9a227" font-size="11" stroke="#1d1510" stroke-width="3" paint-order="stroke" opacity="0.85">' + b.l + '</text></g>';

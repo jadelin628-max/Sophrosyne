@@ -106,7 +106,7 @@ Sophrosyne.Score = (function () {
     if (s.hasGoals) parts.push("武功（大目标 " + s.goalDone + " 成 " + s.goalFailed + " 败）");
     parts.push("制度成色 " + s.sys + "，个人属性 " + s.attr);
     return parts.join("，") + "。故谥「" + s.posthumous + "」" +
-      (s.temple ? "，庙号「" + s.temple + "」。" : "，不入太庙。");
+      (s.temple ? "，庙号「" + s.temple + "」。" : "，不入奉先殿。");
   }
 
   return { scoreReign, posthumousName, templeName, govScore, sysScore, ATTR_KEYS };

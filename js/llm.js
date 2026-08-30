@@ -127,7 +127,7 @@ Sophrosyne.LLM = (function () {
       extra = "\n\n近期废止制度：" + fallen + "\n请写一则「朝政复盘建议」（分析崩因 + 零敲牛皮糖式拆分改进）。";
     } else if (task === "posthumous") {
       const last = state.dynasty.lineage[state.dynasty.lineage.length - 1];
-      if (!last) extra = "\n\n太庙尚空，请说明暂无先帝可评。";
+      if (!last) extra = "\n\n奉先殿尚空，请说明暂无先帝可评。";
       else extra = "\n\n先帝：" + last.eraName + "（在位" + last.years + "年，谥「" + last.posthumous + "」" + (last.temple ? "，庙号「" + last.temple + "」" : "") + "）。依据：" + (last.score && last.score.reason) + "\n请写「盖棺定论」评语。";
     }
     return chat(state, context(state) + extra);

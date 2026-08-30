@@ -91,37 +91,55 @@ Sophrosyne.UI = (function () {
     yuhuayuan:    [ { label: "本殿事务", targets: ["[data-venue-info=yuhuayuan]"] } ],
   };
 
-  // 宫殿交互点（x/y=中心, s=热点边长, l=标签, v=点击进入的视图）
+  // 宫殿交互点（x/y=中心, s=热点边长, l=标签, v=点击进入的视图）——按真实紫禁城排布
   const PALACE = [
     // 中轴（北→南）
-    { x: 320, y: 55,  s: 70,  l: "神武门" },
-    { x: 320, y: 172, s: 96,  l: "御花园", v: "yuhuayuan" },
-    { x: 320, y: 352, s: 84,  l: "坤宁宫", v: "kunninggong" },
-    { x: 320, y: 432, s: 66,  l: "交泰殿" },
-    { x: 320, y: 482, s: 106, l: "乾清宫", v: "court" },
-    { x: 320, y: 552, s: 74,  l: "乾清门" },
-    { x: 320, y: 660, s: 90,  l: "保和殿", v: "baohe" },
-    { x: 320, y: 716, s: 66,  l: "中和殿" },
-    { x: 320, y: 860, s: 120, l: "太和殿", v: "focus" },
-    { x: 320, y: 1005, s: 84, l: "太和门", v: "taihemen" },
-    { x: 320, y: 1082, s: 84, l: "午门" },
-    // 西侧
-    { x: 118, y: 245, s: 78, l: "慈宁宫" },
-    { x: 116, y: 332, s: 66, l: "御膳房", v: "yushanfang" },
-    { x: 114, y: 442, s: 72, l: "内务府", v: "neiweufu" },
-    { x: 120, y: 552, s: 82, l: "养心殿", v: "chain" },
-    { x: 110, y: 662, s: 84, l: "军机处", v: "policy" },
-    { x: 110, y: 792, s: 84, l: "武英殿", v: "wuyingdian" },
-    { x: 56,  y: 572, s: 48, l: "西华门" },
-    // 东侧
-    { x: 540, y: 245, s: 78, l: "宁寿宫" },
-    { x: 546, y: 358, s: 66, l: "钦天监", v: "qintianjian" },
-    { x: 542, y: 442, s: 68, l: "畅音阁", v: "changyinge" },
-    { x: 536, y: 552, s: 76, l: "上书房", v: "shangshufang" },
-    { x: 530, y: 668, s: 94, l: "太庙", v: "history" },
-    { x: 546, y: 792, s: 88, l: "文华殿", v: "wenhuadian" },
-    { x: 546, y: 922, s: 86, l: "文渊阁", v: "record" },
-    { x: 598, y: 572, s: 48, l: "东华门" },
+    { x: 320, y: 51,  s: 66,  l: "神武门" },
+    { x: 320, y: 172, s: 92,  l: "御花园", v: "yuhuayuan" },
+    { x: 320, y: 267, s: 80,  l: "坤宁宫", v: "kunninggong" },
+    { x: 320, y: 355, s: 64,  l: "交泰殿" },
+    { x: 320, y: 433, s: 100, l: "乾清宫", v: "court" },
+    { x: 320, y: 477, s: 72,  l: "乾清门" },
+    { x: 320, y: 549, s: 86,  l: "保和殿", v: "baohe" },
+    { x: 320, y: 655, s: 64,  l: "中和殿" },
+    { x: 320, y: 858, s: 118, l: "太和殿", v: "focus" },
+    { x: 320, y: 1003, s: 84, l: "太和门", v: "taihemen" },
+    { x: 320, y: 1083, s: 84, l: "午门" },
+    // 内廷西侧（养心殿/军机处/隆宗门 + 西六宫）
+    { x: 152, y: 462, s: 74,  l: "养心殿", v: "chain" },
+    { x: 195, y: 500, s: 54,  l: "军机处", v: "policy" },
+    { x: 254, y: 492, s: 40,  l: "隆宗门" },
+    { x: 135, y: 258, s: 46,  l: "永寿宫" },
+    { x: 185, y: 258, s: 46,  l: "翊坤宫" },
+    { x: 135, y: 320, s: 46,  l: "储秀宫" },
+    { x: 185, y: 320, s: 46,  l: "咸福宫" },
+    { x: 135, y: 382, s: 46,  l: "长春宫" },
+    { x: 185, y: 382, s: 46,  l: "太极殿" },
+    // 外朝西 / 服务区
+    { x: 110, y: 800, s: 82, l: "武英殿", v: "wuyingdian" },
+    { x: 205, y: 858, s: 44, l: "弘义阁" },
+    { x: 118, y: 215, s: 70, l: "慈宁宫" },
+    { x: 106, y: 565, s: 58, l: "御膳房", v: "yushanfang" },
+    { x: 112, y: 645, s: 62, l: "内务府", v: "neiweufu" },
+    { x: 56,  y: 572, s: 44, l: "西华门" },
+    // 内廷东侧（奉先殿/上书房/景运门 + 东六宫 + 宁寿宫）
+    { x: 500, y: 432, s: 68,  l: "奉先殿", v: "history" },
+    { x: 530, y: 472, s: 60,  l: "上书房", v: "shangshufang" },
+    { x: 388, y: 492, s: 40,  l: "景运门" },
+    { x: 575, y: 442, s: 56,  l: "畅音阁", v: "changyinge" },
+    { x: 522, y: 545, s: 58,  l: "钦天监", v: "qintianjian" },
+    { x: 498, y: 258, s: 46,  l: "景仁宫" },
+    { x: 548, y: 258, s: 46,  l: "承乾宫" },
+    { x: 498, y: 320, s: 46,  l: "钟粹宫" },
+    { x: 548, y: 320, s: 46,  l: "景阳宫" },
+    { x: 498, y: 382, s: 46,  l: "永和宫" },
+    { x: 548, y: 382, s: 46,  l: "延禧宫" },
+    // 外朝东（文华殿/文渊阁/宁寿宫北）
+    { x: 540, y: 215, s: 70, l: "宁寿宫" },
+    { x: 540, y: 735, s: 76, l: "文渊阁", v: "record" },
+    { x: 540, y: 795, s: 84, l: "文华殿", v: "wenhuadian" },
+    { x: 436, y: 858, s: 44, l: "体仁阁" },
+    { x: 598, y: 572, s: 44, l: "东华门" },
   ];
 
   function init(s, opts) {
@@ -215,7 +233,7 @@ Sophrosyne.UI = (function () {
     renderPolicy();           // 军机处：典章制度
     renderRecord();           // 文渊阁：起居注
     Object.keys(VENUES).forEach(renderVenueInfo);  // 各殿「本殿事务」说明
-    renderHistory();          // 太庙：实录
+    renderHistory();          // 奉先殿：实录
   }
 
   function renderStatusBar() {
@@ -408,7 +426,7 @@ Sophrosyne.UI = (function () {
     $("#abdicate-banner").hidden = !Engine.shouldAbdicate(state);
     const lineage = state.dynasty.lineage;
     const el = $("#lineage");
-    if (!lineage.length) { el.innerHTML = '<p class="hint">太庙尚空。</p>'; return; }
+    if (!lineage.length) { el.innerHTML = '<p class="hint">奉先殿尚空。</p>'; return; }
     el.innerHTML = lineage.slice().reverse().map(l => {
       const title = "「" + escapeHtml(l.eraName) + "」" + (l.posthumous ? " · 谥「" + escapeHtml(l.posthumous) + "」" : "") + (l.temple ? " · 庙号「" + escapeHtml(l.temple) + "」" : "");
       const recs = (l.veritableRecords || []);

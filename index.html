@@ -16,8 +16,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <button id="settings-btn" class="gear" title="设置" aria-label="设置">⚙</button>
-
   <header id="topbar">
     <div class="brand">
       <span class="seal" aria-hidden="true">帝</span>
@@ -26,21 +24,19 @@
         <div class="era" id="era-name">建元 · 在位第 1 年 · 春秋 18 岁</div>
       </div>
     </div>
+    <!-- 状态（并入顶栏，与设置同一栏）：预约 / 临朝 / 最近起居注 -->
+    <div class="stat-status" id="status-row" role="button" tabindex="0" title="点击查看详情">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-text" id="status-text">—</span>
+      <span class="status-timer" id="status-timer"></span>
+    </div>
     <div class="stats">
       <div class="stat"><span class="k">国库</span><span class="v" id="stat-treasury">—</span></div>
       <div class="stat"><span class="k">民心</span><span class="v" id="stat-support">—</span></div>
       <div class="stat"><span class="k">威望</span><span class="v" id="stat-prestige">—</span></div>
       <div class="stat"><span class="k">勤政</span><span class="v" id="stat-main">0</span></div>
     </div>
-  </header>
-
-  <!-- 可交互状态栏：预约 / 临朝 / 最近起居注 -->
-  <div id="statusbar" class="statusbar">
-    <div class="status-row" id="status-row" role="button" tabindex="0" title="点击查看详情">
-      <span class="status-dot" id="status-dot"></span>
-      <span class="status-text" id="status-text">—</span>
-      <span class="status-timer" id="status-timer"></span>
-    </div>
+    <button id="settings-btn" class="gear" title="设置" aria-label="设置">⚙</button>
     <div class="status-actions">
       <div id="status-focus-actions" class="row" hidden>
         <button id="focus-complete" class="btn primary">功成 · 完成</button><button id="focus-abandon" class="btn danger">失守 · 违规</button>
@@ -49,7 +45,7 @@
         <button id="appointment-fulfill" class="btn primary">履约 · 立即临朝</button><button id="appointment-miss" class="btn danger">失信（威望 -1）</button>
       </div>
     </div>
-  </div>
+  </header>
 
   <main>
     <!-- 紫禁城俯视地图 -->

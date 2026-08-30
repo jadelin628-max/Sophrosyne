@@ -64,6 +64,8 @@ Sophrosyne.Engine = (function () {
       if (state.reign.todayTasks.length) { fallbackSettle(state); state.reign.todayTasks = []; }
       yearlyAdvance(state);
       state.meta.lastTickDate = now;
+      // yearlyAdvance 内已保存，但那时 lastTickDate 还是旧值；这里再保存一次，确保下次刷新/加载读到"今日已结算"，避免重复加龄。
+      Store.save(state);
     }
     return state;
   }

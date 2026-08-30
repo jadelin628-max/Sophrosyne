@@ -60,11 +60,26 @@ Sophrosyne.Metrics = (function () {
   }
 
   // —— 多指标增减（effects: { key: delta }，可增可减）——
+  // LLM 可能返回字符串/异常数值：一律 Number 强转，非有限数归零；
+  // 并限制单次增减幅值（LLM 路径无天然量级约束，防一次跑偏输出把指标拉爆）。
+  const EFFECT_CAP_BOUNDED = 15;   // 0-100 指标单次增减上限
+  const EFFECT_CAP_REL = 0.05;     // 无上限指标：±(现值 × 5% + 100)
+  const EFFECT_CAP_ABS = 100;
+
+  function sanitizeDelta(k, cur, raw) {
+    let v = Number(raw);
+    if (!isFinite(v)) return 0;
+    const def = DEFS[k];
+    const cap = (def.max != null) ? EFFECT_CAP_BOUNDED : Math.abs(cur) * EFFECT_CAP_REL + EFFECT_CAP_ABS;
+    return clamp(v, -cap, cap);
+  }
+
   function applyEffects(m, effects) {
     if (!effects) return m;
     for (const k of Object.keys(effects)) {
-      if (!(k in m)) continue;
-      m[k] = clamp(m[k] + (effects[k] || 0), DEFS[k].min, DEFS[k].max);
+      if (!(k in DEFS)) continue;
+      const cur = Number(m[k]) || 0;
+      m[k] = clamp(cur + sanitizeDelta(k, cur, effects[k]), DEFS[k].min, DEFS[k].max);
     }
     return m;
   }

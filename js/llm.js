@@ -19,7 +19,8 @@ Sophrosyne.LLM = (function () {
     "1. 语气雅正、精炼、有古风，通俗可读，不堆砌文言；",
     "2. 增减幅度要克制、合理，与真实任务的分量匹配（普通一天不必惊天动地）；",
     "3. 必须引用给定数据，前后自洽；不凭空捏造史实；",
-    "4. 只输出 JSON，不要输出任何多余文字。",
+    "4. effects 中的增减值必须是 JSON 数字（不可为字符串或缺失键名的猜测值）；",
+    "5. 只输出 JSON，不要输出任何多余文字。",
   ].join("\n");
 
   function config(state) {
@@ -62,10 +63,14 @@ Sophrosyne.LLM = (function () {
       "\n{\"entries\":[{\"month\":\"正月\",\"title\":\"帝御门听政，批阅奏章\",\"effects\":{\"treasury\":1000,\"order\":2},\"note\":\"一句史官评语\"}]}";
   }
 
+  const REQUEST_TIMEOUT_MS = 60000;
+
   async function chat(state, userContent) {
     const cfg = config(state);
     if (!cfg.apiKey || !cfg.baseUrl || !cfg.model) throw new Error("请先在「设置」配置大模型（Base URL / API Key / 模型名）。");
     const url = cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions";
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
     let res;
     try {
       res = await fetch(url, {
@@ -79,15 +84,20 @@ Sophrosyne.LLM = (function () {
           ],
           temperature: 0.7,
         }),
+        signal: ctrl.signal,
       });
     } catch (e) {
-      throw new Error("网络请求失败：" + e.message);
+      throw new Error(e.name === "AbortError" ? "请求超时（" + REQUEST_TIMEOUT_MS / 1000 + " 秒），请检查网络或稍后再试。" : "网络请求失败：" + e.message);
+    } finally {
+      clearTimeout(timer);
     }
     if (!res.ok) {
       const t = await res.text().catch(() => "");
       throw new Error("LLM 返回 HTTP " + res.status + "：" + t.slice(0, 200));
     }
-    const data = await res.json();
+    let data;
+    try { data = await res.json(); }
+    catch (e) { throw new Error("LLM 返回的不是有效 JSON（可能是网关错误页）。"); }
     const c = data.choices && data.choices[0] && data.choices[0].message;
     return c ? c.content.trim() : "";
   }
@@ -105,7 +115,7 @@ Sophrosyne.LLM = (function () {
     const text = await chat(state, buildSettlePrompt(state, tasks));
     const obj = extractJson(text);
     if (!obj || !Array.isArray(obj.entries)) throw new Error("LLM 输出无法解析为 JSON");
-    return obj.entries.filter(e => e && (e.title || e.note || e.effects));
+    return obj.entries.filter(e => e && typeof e === "object" && (e.title || e.note || e.effects));
   }
 
   // 通用史官评语（起居评语 / 复盘建议 / 盖棺定论）

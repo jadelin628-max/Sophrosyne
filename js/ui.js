@@ -285,7 +285,7 @@ Sophrosyne.UI = (function () {
     if (!state.heirs.length) { el.innerHTML = '<p class="hint">尚无子嗣（琴瑟和鸣等事务可加速诞育）。</p>'; return; }
     el.innerHTML = state.heirs.map(h =>
       '<div class="goal-row"><div class="goal-name"><b>' + escapeHtml(h.name) + '</b> <span class="hint">' + (h.gender === "male" ? "皇子" : "公主") + ' · ' + h.age + ' 岁 · 智' + h.attributes.intellect + '</span></div>' +
-      '<span class="goal-actions"><button data-hact="train" data-id="' + h.id + '">培养</button></span></div>'
+      '<span class="goal-actions"><button data-hact="train" data-id="' + escapeHtml(h.id) + '">培养</button></span></div>'
     ).join("");
   }
   function renderEventStatus(el) {
@@ -306,9 +306,9 @@ Sophrosyne.UI = (function () {
         return '<div class="subgoal' + (sg.done ? " done" : "") + '"><b>' + (sg.done ? "✓" : "·") + ' ' + escapeHtml(sg.name) + '</b>' + crits + '</div>';
       }).join("");
       const txt = g.status === "done" ? "已击退" : (g.status === "failed" ? "已兵败" : "进行中");
-      return '<div class="goal-row ' + g.status + '"><div class="goal-name"><b>' + escapeHtml(g.name) + '</b>' + (g.flavor ? ' <span class="hint">' + escapeHtml(g.flavor) + '</span>' : '') + subs + '</div>' +
+      return '<div class="goal-row ' + escapeHtml(g.status) + '"><div class="goal-name"><b>' + escapeHtml(g.name) + '</b>' + (g.flavor ? ' <span class="hint">' + escapeHtml(g.flavor) + '</span>' : '') + subs + '</div>' +
         '<span class="goal-status">' + txt + '</span>' +
-        (g.status === "active" ? '<span class="goal-actions"><button data-gact="sub" data-id="' + g.id + '">加阶段目标</button><button data-gact="done" data-id="' + g.id + '">大捷</button><button data-gact="failed" data-id="' + g.id + '">兵败</button></span>' : '') +
+        (g.status === "active" ? '<span class="goal-actions"><button data-gact="sub" data-id="' + escapeHtml(g.id) + '">加阶段目标</button><button data-gact="done" data-id="' + escapeHtml(g.id) + '">大捷</button><button data-gact="failed" data-id="' + escapeHtml(g.id) + '">兵败</button></span>' : '') +
         '</div>';
     }).join("");
   }
@@ -342,7 +342,7 @@ Sophrosyne.UI = (function () {
     const tree = $("#policy-tree");
     $("#policy-add-hint").textContent = Engine.policyAddAllowed(state) ? "今日尚可颁行一条制度。" : "今日已颁行过制度，明日再议。";
     const parentSel = $("#policy-parent");
-    parentSel.innerHTML = '<option value="">（根基制度）</option>' + state.policies.filter(p => p.status === "active").map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join("");
+    parentSel.innerHTML = '<option value="">（根基制度）</option>' + state.policies.filter(p => p.status === "active").map(p => '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>').join("");
     const groups = {};
     state.policies.forEach(p => { if (p.group) groups[p.group] = (groups[p.group] || 0) + 1; });
     tree.innerHTML = '<p class="hint">分组：' + (Object.keys(groups).map(g => g + " ×" + groups[g]).join(" · ") || "无") + '</p>';
@@ -359,7 +359,7 @@ Sophrosyne.UI = (function () {
       '<span class="policy-status">' + (p.status === "active" ? "在行" : "已废") + '</span>' +
       '<span class="policy-meta">固化 ' + p.solidity + '/' + (p.solidityCap || 100) + ' · 坚持 ' + p.survivalDays + ' 天 · Lv' + p.level + (p.revive ? ' · 复活×' + p.revive : '') + (p.strengthened ? ' · 已强化' : '') + '</span>' +
       '<div class="policy-actions">' +
-      (p.status === "active" ? '<button data-act="upgrade" data-id="' + p.id + '">升级</button><button data-act="strengthen" data-id="' + p.id + '">强化</button><button data-act="collapse" data-id="' + p.id + '">失守</button>' : '<button data-act="rescue" data-id="' + p.id + '">迁都</button>') +
+      (p.status === "active" ? '<button data-act="upgrade" data-id="' + escapeHtml(p.id) + '">升级</button><button data-act="strengthen" data-id="' + escapeHtml(p.id) + '">强化</button><button data-act="collapse" data-id="' + escapeHtml(p.id) + '">失守</button>' : '<button data-act="rescue" data-id="' + escapeHtml(p.id) + '">迁都</button>') +
       '</div></div>' +
       '<div class="policy-bar"><div class="policy-bar-fill" style="width:' + Math.min(100, (p.solidity / (p.solidityCap || 100)) * 100) + '%"></div></div>';
     state.policies.filter(c => c.parentId === p.id).forEach(c => el.appendChild(renderPolicyNode(c, depth + 1)));
@@ -456,7 +456,10 @@ Sophrosyne.UI = (function () {
   }
   async function doSettle(btn) {
     btn.disabled = true; const orig = btn.textContent; btn.textContent = "结算中…";
-    try { await Engine.settleYear(state, true); toast("岁末结算完成。"); } catch (e) { toast("结算出错：" + e.message); }
+    try {
+      const r = await Engine.settleYear(state, true);
+      toast(r.llmFailed ? "史官缺席，以常例结算（" + r.llmFailed + "）。" : "岁末结算完成。");
+    } catch (e) { toast("结算出错：" + e.message); }
     btn.disabled = false; btn.textContent = orig; renderAll();
   }
   function openLlm() {
@@ -464,7 +467,7 @@ Sophrosyne.UI = (function () {
   }
   function openAbdicate() {
     const sel = $("#abdicate-heir");
-    sel.innerHTML = '<option value="">（无子嗣，宗室即位）</option>' + state.heirs.map(h => '<option value="' + h.id + '">' + escapeHtml(h.name) + '（' + h.age + ' 岁）</option>').join("");
+    sel.innerHTML = '<option value="">（无子嗣，宗室即位）</option>' + state.heirs.map(h => '<option value="' + escapeHtml(h.id) + '">' + escapeHtml(h.name) + '（' + h.age + ' 岁）</option>').join("");
     $("#abdicate-modal").hidden = false;
   }
 
@@ -617,9 +620,11 @@ Sophrosyne.UI = (function () {
       state = Engine.tick(Store.reset()); $("#settings-modal").hidden = true; renderAll(); toast("已重置。");
     });
     $("#export-btn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const dump = JSON.parse(JSON.stringify(state));
+      if (dump.settings && dump.settings.llm) delete dump.settings.llm.apiKey; // 导出脱敏，备份文件不含密钥
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "sophrosyne-backup-" + Engine.todayStr() + ".json";
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); toast("已导出存档。");
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); toast("已导出存档（不含 API Key）。");
     });
     $("#import-btn").addEventListener("click", () => $("#import-file").click());
     $("#import-file").addEventListener("change", (e) => {
@@ -627,8 +632,8 @@ Sophrosyne.UI = (function () {
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const obj = JSON.parse(reader.result);
-          if (!obj || !obj.reign || !obj.chains || !obj.policies) throw new Error("格式不符");
+          const obj = Store.revive(JSON.parse(reader.result));
+          if (!obj) throw new Error("格式不符：缺少 reign / chains / policies 结构");
           state = Engine.tick(obj); Store.save(state); renderAll(); toast("已导入。");
         } catch (err) { toast("导入失败：" + err.message); }
       };
@@ -724,5 +729,5 @@ Sophrosyne.UI = (function () {
     window.scrollTo(0, 0);
   }
 
-  return { init };
+  return { init, toast };
 })();

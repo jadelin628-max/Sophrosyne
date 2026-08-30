@@ -113,17 +113,28 @@ Sophrosyne.Engine = (function () {
   }
 
   async function settleYear(state, useLLM) {
+    let llmFailed = null;
     if (state.reign.todayTasks.length) {
+      const tasks = state.reign.todayTasks.slice();
       let entries = null;
-      if (useLLM) { try { entries = await Sophrosyne.LLM.settle(state, state.reign.todayTasks); } catch (e) { entries = null; } }
-      if (entries && entries.length) applySettlement(state, entries);
-      else fallbackSettle(state);
-      state.reign.todayTasks = [];
+      if (useLLM) {
+        try { entries = await Sophrosyne.LLM.settle(state, tasks); }
+        catch (e) { llmFailed = e; entries = null; }
+      }
+      // await 期间跨日 tick 可能已用兜底数值结算并清空任务，复查以免同一批事务双重入账
+      if (state.reign.todayTasks.length) {
+        if (entries && entries.length) applySettlement(state, entries);
+        else {
+          fallbackSettle(state);
+          if (useLLM) log(state, "史官结算未成（" + (llmFailed ? llmFailed.message : "无产出") + "），以常例入账。");
+        }
+        state.reign.todayTasks = [];
+      }
     }
     // 年龄/自然增长等“一年一度”的处理只在跨现实日时由 tick() 触发，
     // 避免“岁末结算”按钮与跨日结算叠加导致一天长两岁。
     Store.save(state);
-    return { settled: true };
+    return { settled: true, llmFailed: llmFailed ? llmFailed.message : null };
   }
 
   function startFocus(state, sceneId, chainKey, realTask) {

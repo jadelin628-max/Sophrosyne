@@ -2,12 +2,21 @@
 window.Sophrosyne = window.Sophrosyne || {};
 Sophrosyne.Store = (function () {
   const KEY = "sophrosyne.v4";
+  const BACKUP_KEY = "sophrosyne.v4.bak";
+  let lastMirrored = null;
 
   function todayStr() {
     const d = new Date();
     return d.getFullYear() + "-" +
       String(d.getMonth() + 1).padStart(2, "0") + "-" +
       String(d.getDate()).padStart(2, "0");
+  }
+
+  // 用户可见的警告（UI 尚未加载时静默降级为 console）
+  function warn(msg) {
+    const UI = window.Sophrosyne && window.Sophrosyne.UI;
+    if (UI && typeof UI.toast === "function") UI.toast(msg);
+    else console.warn(msg);
   }
 
   function newChain(kind) {
@@ -49,27 +58,55 @@ Sophrosyne.Store = (function () {
     };
   }
 
+  function tryParse(raw) {
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+
   function load() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return defaultState();
-      const s = JSON.parse(raw);
-      return deepMerge(defaultState(), s);
-    } catch (e) {
-      console.warn("load failed, using default", e);
-      return defaultState();
+    let raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { /* 读取失败视为无档 */ }
+    if (raw) {
+      const s = tryParse(raw);
+      if (s) return deepMerge(defaultState(), s);
+      console.warn("主存档损坏，尝试备份……");
     }
+    try {
+      const bak = localStorage.getItem(BACKUP_KEY);
+      const s = bak && tryParse(bak);
+      if (s) { warn("存档损坏，已从备份恢复（可能回退片刻）。"); return deepMerge(defaultState(), s); }
+    } catch (e) { /* 无备份 */ }
+    return defaultState();
   }
 
   function save(state) {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); }
-    catch (e) { console.error("save failed", e); }
+    let json;
+    try { json = JSON.stringify(state); }
+    catch (e) { console.error("存档序列化失败", e); warn("存档失败：数据异常。"); return false; }
+    try { localStorage.setItem(KEY, json); }
+    catch (e) {
+      console.error("save failed", e);
+      warn("存档空间不足，本次修改可能未保存。");
+      return false;
+    }
+    if (json !== lastMirrored) {
+      try { localStorage.setItem(BACKUP_KEY, json); lastMirrored = json; }
+      catch (e2) { /* 备份写失败不影响主档 */ }
+    }
+    return true;
   }
 
   function reset() {
     const s = defaultState();
     save(s);
     return s;
+  }
+
+  // 导入净化：以默认档为骨架合并外来数据，补齐缺失字段、丢弃结构不符的部分
+  function revive(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    if (typeof raw.reign !== "object" || typeof raw.chains !== "object" || !Array.isArray(raw.policies)) return null;
+    if (raw.reign && (typeof raw.reign.metrics !== "object" || !raw.reign.metrics)) return null;
+    return deepMerge(defaultState(), raw);
   }
 
   function deepMerge(def, src) {
@@ -88,5 +125,5 @@ Sophrosyne.Store = (function () {
     return src === undefined ? def : src;
   }
 
-  return { KEY, load, save, reset, todayStr, defaultState, newChain };
+  return { KEY, BACKUP_KEY, load, save, reset, revive, todayStr, defaultState, newChain };
 })();

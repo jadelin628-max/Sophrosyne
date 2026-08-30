@@ -9,7 +9,7 @@
   --gold: #c9a227;
   --verm: #c0392b;
   --verm-light: #d3544d;
-  --jade: #5f8f6e;
+  --jade: #7fae8e;
   --line: rgba(201, 162, 39, 0.25);
   --radius: 10px;
   --font: "Noto Serif SC", "STSong", "Songti SC", "SimSun", serif;
@@ -39,7 +39,7 @@ body {
   color: transparent; border-radius: 8px; font-size: 22px; font-weight: bold;
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
-.dynasty { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+.dynasty { font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; margin: 0; }
 .era { font-size: 12px; color: var(--ink-dim); }
 .stats { display: flex; gap: 8px; flex-wrap: wrap; }
 .stat {
@@ -82,12 +82,12 @@ body {
 /* 按钮（鎏金令牌） */
 .btn {
   padding: 9px 16px; border: none; color: #f6df9b; font-weight: 700;
-  background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat;
+  background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat, #7a5c20;
   border-radius: var(--radius); cursor: pointer; font-family: var(--font); font-size: 14px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.55);
 }
 .btn:hover { filter: brightness(1.12); }
-.btn.primary { background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat; color: #f6df9b; font-weight: 700; }
+.btn.primary { background: url("assets/transparent/ui_gold_button.webp") center/100% 100% no-repeat, #7a5c20; color: #f6df9b; font-weight: 700; }
 .btn.danger { background: var(--verm); color: #fff; border: none; }
 .btn.ghost { background: transparent; color: var(--ink-dim); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -180,6 +180,13 @@ input[type="text"], select {
 /* iOS 适配 */
 html { -webkit-text-size-adjust: 100%; }
 * { -webkit-tap-highlight-color: transparent; }
+
+/* 键盘可达性：统一的焦点轮廓（触屏点击不显示） */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 body {
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
@@ -248,7 +255,7 @@ body {
 /* body::after 底部龙纹已移除 */
 
 /* 宫殿视图：整屏室内背景 + 一级按钮 → 点击展开详情 */
-.palace-view { padding: 12px; min-height: 88vh; background-size: cover; background-position: center; background-attachment: fixed; }
+.palace-view { padding: 12px; min-height: 88vh; background-size: cover; background-position: center; }
 #view-court   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_qianqinggong.webp"); }
 #view-focus   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_taihedian.webp"); }
 #view-chain   { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_yangxindian.webp"); }

@@ -613,6 +613,16 @@ Sophrosyne.UI = (function () {
       const nav = $("#status-row").dataset.nav;
       if (nav) openView(nav);
     });
+    // 键盘可达：status-row 与模态 ESC 关闭
+    $("#status-row").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#status-row").click(); }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      let closed = false;
+      $$(".modal").forEach(m => { if (!m.hidden) { m.hidden = true; closed = true; } });
+      if (closed && verdictTarget) verdictTarget = null;
+    });
     $("#settings-cancel").addEventListener("click", () => $("#settings-modal").hidden = true);
     $("#settings-save").addEventListener("click", () => {
       if ($("#set-dynasty").value.trim()) state.dynasty.name = $("#set-dynasty").value.trim();

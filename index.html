@@ -2,26 +2,27 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#241a12" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Sophrosyne" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Sophrosyne · 紫禁城</title>
+  <title>Sophrosyne · 临朝</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon-180.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <button id="settings-btn" class="gear" title="设置">⚙</button>
+  <button id="settings-btn" class="gear" title="设置" aria-label="设置">⚙</button>
 
   <header id="topbar">
     <div class="brand">
-      <span class="seal">帝</span>
+      <span class="seal" aria-hidden="true">帝</span>
       <div class="brand-text">
-        <div class="dynasty" id="dynasty-name">未定</div>
+        <h1 class="dynasty" id="dynasty-name">未定</h1>
         <div class="era" id="era-name">建元 · 在位第 1 年 · 春秋 18 岁</div>
       </div>
     </div>
@@ -83,7 +84,7 @@
           </g>
           <text x="320" y="1216" text-anchor="middle" fill="#c9a227" font-size="11">午门</text>
           <text x="320" y="26" text-anchor="middle" fill="#c9a227" font-size="11">神武门</text>
-          <!-- 台基与建筑由 js/palace 注入 -->
+          <!-- 台基与建筑由 js/ui.js 的 renderPalace() 注入 -->
         </svg>
       </div>
       <p class="hint center">点击宫殿进入对应殿宇，政务/事务按发生地分列各殿；右上角「⚙」为设置。</p>
@@ -176,15 +177,15 @@
     </section>
   </main>
 
-  <div id="verdict-modal" class="modal" hidden>
-    <div class="modal-card"><h2>廷议 · 下必为例</h2><p id="verdict-context" class="context"></p>
+  <div id="verdict-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verdict-modal-title" hidden>
+    <div class="modal-card"><h2 id="verdict-modal-title">廷议 · 下必为例</h2><p id="verdict-context" class="context"></p>
       <label class="field"><span>成例内容（选「下诏成例」时生效）</span><input id="verdict-text" type="text" placeholder="如：回复消息不算违规" /></label>
       <div class="row"><button id="verdict-collapse" class="btn danger">① 废黜（清零）</button><button id="verdict-precedent" class="btn">② 下诏成例（永赦）</button></div>
     </div>
   </div>
 
-  <div id="policy-modal" class="modal" hidden>
-    <div class="modal-card"><h2>颁行制度</h2>
+  <div id="policy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="policy-modal-title" hidden>
+    <div class="modal-card"><h2 id="policy-modal-title">颁行制度</h2>
       <label class="field"><span>制度名（真实规范）</span><input id="policy-name" type="text" placeholder="如：子时后不碰手机" /></label>
       <label class="field"><span>分组（自拟）</span><input id="policy-group" type="text" placeholder="作息" /></label>
       <label class="field"><span>风味描述（可选）</span><input id="policy-flavor" type="text" placeholder="如：城门宵禁，子时锁钥" /></label>
@@ -193,31 +194,31 @@
     </div>
   </div>
 
-  <div id="abdicate-modal" class="modal" hidden>
-    <div class="modal-card"><h2>禅位 / 驾崩</h2><p class="context">结算谥号庙号、起居注变实录，新君继位；制度固化度保留。</p>
+  <div id="abdicate-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="abdicate-modal-title" hidden>
+    <div class="modal-card"><h2 id="abdicate-modal-title">禅位 / 驾崩</h2><p class="context">结算谥号庙号、起居注变实录，新君继位；制度固化度保留。</p>
       <label class="field"><span>谥号评定方式</span><select id="abdicate-mode"><option value="rule">按各指标增减自动评定</option><option value="llm">请大模型评定（需已配置）</option></select></label>
       <label class="field"><span>继位人选</span><select id="abdicate-heir"><option value="">（无子嗣，宗室即位）</option></select></label>
       <div class="row"><button id="abdicate-cancel" class="btn ghost">再等等</button><button id="abdicate-confirm" class="btn danger">确认禅位</button></div>
     </div>
   </div>
 
-  <div id="goal-modal" class="modal" hidden>
-    <div class="modal-card"><h2>立大志（王朝敌人）</h2>
+  <div id="goal-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="goal-modal-title" hidden>
+    <div class="modal-card"><h2 id="goal-modal-title">立大志（王朝敌人）</h2>
       <label class="field"><span>大目标（现实）</span><input id="goal-name" type="text" placeholder="如：考研上岸" /></label>
       <label class="field"><span>敌人风味（可选）</span><input id="goal-flavor" type="text" placeholder="如：击退北方游牧" /></label>
       <div class="row"><button id="goal-cancel" class="btn ghost">取消</button><button id="goal-save" class="btn primary">立大志</button></div>
     </div>
   </div>
 
-  <div id="event-modal" class="modal" hidden>
-    <div class="modal-card"><h2>报备突发事件</h2>
+  <div id="event-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title" hidden>
+    <div class="modal-card"><h2 id="event-modal-title">报备突发事件</h2>
       <label class="field"><span>事件描述</span><input id="event-text" type="text" placeholder="如：偶感风寒，数日无法视事" /></label>
       <div class="row"><button id="event-cancel" class="btn ghost">取消</button><button id="event-enter" class="btn danger">进入非常时期</button></div>
     </div>
   </div>
 
-  <div id="subgoal-modal" class="modal" hidden>
-    <div class="modal-card"><h2>分解阶段目标</h2>
+  <div id="subgoal-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="subgoal-modal-title" hidden>
+    <div class="modal-card"><h2 id="subgoal-modal-title">分解阶段目标</h2>
       <label class="field"><span>阶段目标名</span><input id="subgoal-name" type="text" placeholder="如：每日背单词" /></label>
       <div class="field"><span>评判标准（可多选，全部达成即完成）</span>
         <div id="subgoal-criteria"></div>
@@ -227,8 +228,8 @@
     </div>
   </div>
 
-  <div id="settings-modal" class="modal" hidden>
-    <div class="modal-card"><h2>设置</h2>
+  <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" hidden>
+    <div class="modal-card"><h2 id="settings-modal-title">设置</h2>
       <label class="field"><span>国号</span><input id="set-dynasty" type="text" /></label>
       <label class="field"><span>年号</span><input id="set-era" type="text" /></label>
       <div class="row"><button id="settings-cancel" class="btn ghost">取消</button><button id="settings-save" class="btn primary">保存</button></div>
@@ -243,8 +244,8 @@
     </div>
   </div>
 
-  <div id="llm-modal" class="modal" hidden>
-    <div class="modal-card"><h2>请史官</h2>
+  <div id="llm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title" hidden>
+    <div class="modal-card"><h2 id="llm-modal-title">请史官</h2>
       <label class="field"><span>任务</span><select id="llm-task"><option value="diary">今日起居评语</option><option value="review">朝政复盘建议</option><option value="posthumous">盖棺定论（谥号评语）</option></select></label>
       <button id="llm-ask" class="btn primary" style="width:100%">召唤史官</button>
       <div id="llm-result" class="llm-result" hidden></div>
@@ -252,8 +253,8 @@
     </div>
   </div>
 
-  <div id="setup-modal" class="modal" hidden>
-    <div class="modal-card"><h2>开国建制</h2><p class="context">新朝肇建，请定国号与年号。</p>
+  <div id="setup-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="setup-modal-title" hidden>
+    <div class="modal-card"><h2 id="setup-modal-title">开国建制</h2><p class="context">新朝肇建，请定国号与年号。</p>
       <label class="field"><span>国号</span><input id="setup-dynasty" type="text" placeholder="如：大夏" /></label>
       <label class="field"><span>年号</span><input id="setup-era" type="text" placeholder="如：建元" /></label>
       <button id="setup-save" class="btn primary" style="width:100%">开国</button>

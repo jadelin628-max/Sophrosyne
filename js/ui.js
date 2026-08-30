@@ -424,7 +424,8 @@ Sophrosyne.UI = (function () {
     const key = currentVenue(btn);
     if (!Scenes.byVenue(key).some(c => c.id === selectedSceneId)) { toast("请先择本殿的政务/事务。"); return; }
     const task = btn.closest(".venue-pick").querySelector(".venue-task").value.trim();
-    Engine.startFocus(state, selectedSceneId, selectedChain, task);
+    const r = Engine.startFocus(state, selectedSceneId, selectedChain, task);
+    if (!r || r.blocked) { toast((r && r.reason) || "临朝未开始。"); return; }
     renderAll(); toast("临朝开始，专注 " + state.settings.focusMinutes + " 分钟。");
   }
   // 二级详情：点击一级信息按钮 → 展开对应面板（其余面板隐藏）
@@ -507,7 +508,11 @@ Sophrosyne.UI = (function () {
 
     $("#focus-complete").addEventListener("click", () => { const r = Engine.completeFocus(state); renderAll(); toast(r ? "功成！主要政务 #" + r.number : "已功成"); });
     $("#focus-abandon").addEventListener("click", () => { const v = Engine.abandonFocus(state); if (v) openVerdict(v.target, "临朝中失守，当廷议裁定。"); });
-    $("#appointment-fulfill").addEventListener("click", () => { Engine.fulfillAppointment(state); renderAll(); toast("守信履约，威望 +1，开始临朝。"); });
+    $("#appointment-fulfill").addEventListener("click", () => {
+      const r = Engine.fulfillAppointment(state);
+      if (r && r.blocked) { toast(r.reason); return; }
+      renderAll(); toast("守信履约，威望 +1，开始临朝。");
+    });
     $("#appointment-miss").addEventListener("click", () => { Engine.missAppointment(state); renderAll(); toast("失信失约，威望 -1。"); });
 
     $("#verdict-collapse").addEventListener("click", () => { Engine.verdict(state, verdictTarget, "collapse", null); closeVerdict(); renderAll(); toast("已废黜，纪录清零。"); });

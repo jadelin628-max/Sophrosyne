@@ -22,7 +22,12 @@ Sophrosyne.Engine = (function () {
     if (state.log.length > 500) state.log.length = 500;
   }
 
-  function reignYears(state) { return daysBetween(state.reign.startDate, todayStr()) + 1; }
+  function reignYears(state) {
+    // 在位年数与年龄同源（按打开应用的跨日计）：长期不打开时年数不再按自然日虚涨。
+    // 旧存档无 startAge 字段时退回自然日算法，避免误算。
+    if (state.reign.startAge != null) return state.reign.age - state.reign.startAge + 1;
+    return daysBetween(state.reign.startDate, todayStr()) + 1;
+  }
   function computeLifeSpan(attrs, prevLifeSpan) {
     const r = Math.random() * 15;
     return Math.max(30, Math.round(60 + (attrs.health || 50) * 0.20 + (attrs.composure || 50) * 0.10 + ((prevLifeSpan || 80) - 80) * 0.15 + r));
@@ -65,6 +70,7 @@ Sophrosyne.Engine = (function () {
   function init() {
     const state = Store.load();
     ensureLifeSpan(state);
+    if (state.reign.startAge == null) { state.reign.startAge = state.reign.age; Store.save(state); }
     tick(state);
     return state;
   }
@@ -84,8 +90,10 @@ Sophrosyne.Engine = (function () {
   function applySettlement(state, entries) {
     let loveCount = 0;
     for (const t of state.reign.todayTasks) if (t.sceneId === "love") loveCount++;
+    // 与兜底路径一致：结算同样受威望加成（LLM 结算无主属性，仅取威望项）
+    const factor = efficiency(state, null);
     for (const e of entries) {
-      if (e.effects) Metrics.applyEffects(state.reign.metrics, e.effects);
+      if (e.effects) Metrics.applyEffects(state.reign.metrics, scaleEffects(e.effects, factor));
       log(state, (e.title || "政务") + (e.note ? "：" + e.note : ""));
     }
     checkHeirBirth(state, loveCount);
@@ -103,8 +111,11 @@ Sophrosyne.Engine = (function () {
     for (const p of state.policies) {
       if (p.status !== "active") continue;
       if (!inEvent) { p.survivalDays += 1; p.solidity = Math.min(p.solidityCap || 100, p.solidity + SOLIDITY_PER_DAY); }
-      if (p.solidity >= 60) state.reign.metrics.support += 0.2;
-      if (p.strengthened) { state.reign.metrics.support += 0.3 * (p.level || 0); state.reign.metrics.order += 0.2 * (p.level || 0); }
+      if (p.solidity >= 60) state.reign.metrics.support = clamp(state.reign.metrics.support + 0.2, 0, 100);
+      if (p.strengthened) {
+        state.reign.metrics.support = clamp(state.reign.metrics.support + 0.3 * (p.level || 0), 0, 100);
+        state.reign.metrics.order = clamp(state.reign.metrics.order + 0.2 * (p.level || 0), 0, 100);
+      }
     }
     evaluateSubGoals(state);
     if (shouldAbdicate(state)) log(state, "圣寿已至「" + state.reign.lifeSpan + "」，当择日禅位 / 驾崩。");
@@ -138,6 +149,7 @@ Sophrosyne.Engine = (function () {
   }
 
   function startFocus(state, sceneId, chainKey, realTask) {
+    if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，请先功成或失守。" };
     const sc = Scenes.get(sceneId);
     if (!sc) return null;
     const minutes = state.settings.focusMinutes || 60;
@@ -209,6 +221,7 @@ Sophrosyne.Engine = (function () {
   function fulfillAppointment(state) {
     const ap = state.activeAppointment || state.chains.appointment.active;
     if (!ap) return null;
+    if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，预约暂不能履约。" };
     state.reign.attributes.prestige = Math.min(100, state.reign.attributes.prestige + 1);
     state.chains.appointment.history.push({ sceneId: ap.sceneId, fulfilled: true, date: todayStr() });
     state.activeAppointment = null; state.chains.appointment.active = null;
@@ -347,9 +360,10 @@ Sophrosyne.Engine = (function () {
           p.solidityCap = Math.max(100, p.solidityCap - 50);
           p.solidity = Math.floor(p.solidity / 2);
           p.status = "active";
-        } else {
+        } else if (p.status !== "fallen") {
           p.status = "fallen"; p.solidity = Math.floor(p.solidity / 2); p.collapseCount += 1;
         }
+        // 已废制度不再重复减半/累加崩坏次数
       }
       log(state, "非常时期结束（判违规），制度树重置；已升级者降级保全。");
     }
@@ -429,6 +443,11 @@ Sophrosyne.Engine = (function () {
 
   async function abdicate(state, reason, opts) {
     opts = opts || {};
+    // 禅位前未结算的事务不作数，但须载入实录而非无声丢弃
+    if (state.reign.todayTasks.length) {
+      log(state, "禅位时有 " + state.reign.todayTasks.length + " 件已记事务未及岁末结算，弃置。");
+      state.reign.todayTasks = [];
+    }
     const y = reignYears(state);
     const isFirst = state.dynasty.lineage.length === 0;
     const goalsThisReign = state.goals.filter(g => g.status !== "active" && g.resolvedAt && g.resolvedAt >= state.reign.startDate);
@@ -478,11 +497,11 @@ Sophrosyne.Engine = (function () {
     state.reign.eraName = next;
     state.reign.startDate = todayStr();
     state.reign.age = newAge;
+    state.reign.startAge = newAge;
     state.reign.lifeSpan = computeLifeSpan(newAttrs, prevLifeSpan);
     state.reign.attributes = newAttrs;
     state.reign.metrics = Metrics.initialMetrics();
     state.reign.baseline = Metrics.initialMetrics();
-    state.reign.eventPrecedents = [];
     state.reign.eventMode = null;
     state.reign.todayTasks = [];
     state.chains.main = Store.newChain("main");
@@ -493,6 +512,8 @@ Sophrosyne.Engine = (function () {
     state.log = [];
     state.meta.lastTickDate = todayStr();
     state.meta.advancedToday = false;
+    state.meta.lastTrainDate = null;      // 新君即位，当日培养/颁行限制不继承
+    state.meta.lastPolicyAddDate = null;
     if (opts.heirId) state.heirs = state.heirs.filter(x => x.id !== opts.heirId);
     log(state, accession + "，年号「" + next + "」，春秋 " + newAge + " 岁。");
     Store.save(state);

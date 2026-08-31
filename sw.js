@@ -1,7 +1,7 @@
 /* Sophrosyne — Service Worker（离线缓存）
  * 发版时务必递增 CACHE 版本号，否则 cache-first 会让老用户永远拿到旧文件。
  */
-const CACHE = "sophrosyne-v38";
+const CACHE = "sophrosyne-v39";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,6 +19,7 @@ const ASSETS = [
   "./js/score.js",
   "./js/engine.js",
   "./js/llm.js",
+  "./js/events.js",
   "./js/ui.js",
   "./js/app.js",
   "./assets/generated/palace_plan.webp",

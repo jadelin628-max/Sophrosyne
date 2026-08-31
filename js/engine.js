@@ -150,6 +150,47 @@ Sophrosyne.Engine = (function () {
     return { settled: true, llmFailed: llmFailed ? llmFailed.message : null };
   }
 
+  // 提案式结算：返回待确认草案（LLM 或本地确定性规则）；LLM 失败回退本地
+  async function proposeSettlement(state, useLLM) {
+    const tasks = state.reign.todayTasks.slice();
+    if (useLLM) {
+      try { return { draft: await Sophrosyne.LLM.proposeSettlement(state, tasks), source: "llm" }; }
+      catch (e) { /* 回退本地规则 */ }
+    }
+    const entries = tasks.map(t => {
+      const sc = Scenes.get(t.sceneId);
+      if (!sc) return null;
+      return { title: sc.gov + (t.realTask ? "——" + t.realTask : ""), effects: scaleEffects(sc.defaultEffects, efficiency(state, sc.primary)), note: "" };
+    }).filter(Boolean);
+    return { draft: { title: "", note: "", entries }, source: "fallback" };
+  }
+  // 确认后写入存档：逐项封顶 + 应用国力，清空今日事务
+  function applySettlementDraft(state, draft) {
+    const entries = (draft && draft.entries) || [];
+    const factor = efficiency(state, null);
+    let loveCount = 0;
+    for (const t of state.reign.todayTasks) if (t.sceneId === "love") loveCount++;
+    for (const e of entries) {
+      if (!e || typeof e !== "object") continue;
+      const capped = {};
+      if (e.effects && typeof e.effects === "object") {
+        for (const k of Object.keys(e.effects)) {
+          if (!Metrics.DEFS[k]) continue;
+          const v = Number(e.effects[k]);
+          if (!Number.isFinite(v)) continue;
+          const def = Metrics.DEFS[k];
+          capped[k] = Math.round(def.max === 100 ? Math.max(-15, Math.min(15, v)) : Math.max(-100000, Math.min(100000, v)));
+        }
+      }
+      if (Object.keys(capped).length) Metrics.applyEffects(state.reign.metrics, scaleEffects(capped, factor));
+      log(state, (e.title || "政务") + (e.note ? "：" + e.note : ""));
+    }
+    checkHeirBirth(state, loveCount);
+    state.reign.todayTasks = [];
+    Store.save(state);
+    return { applied: entries.length };
+  }
+
   function startFocus(state, sceneId, chainKey, realTask) {
     if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，请先功成或失守。" };
     const sc = Scenes.get(sceneId);
@@ -546,7 +587,7 @@ Sophrosyne.Engine = (function () {
     efficiency, scaleEffects, describeEffects, chainLabel,
     startFocus, expireFocus, completeFocus, abandonFocus, verdict,
     scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, advanceTimers,
-    settleYear, fallbackSettle, applySettlement, yearlyAdvance,
+    settleYear, proposeSettlement, applySettlementDraft, fallbackSettle, applySettlement, yearlyAdvance,
     addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy,
     adjudicateEvent, checkHeirBirth, createHeir, trainHeir,
     addGoal, addSubGoal, resolveGoal, evaluateSubGoals, criterionMet, describeCriterion, countSubGoalsDone,

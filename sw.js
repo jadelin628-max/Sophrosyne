@@ -1,7 +1,7 @@
 /* Sophrosyne — Service Worker（离线缓存）
  * 发版时务必递增 CACHE 版本号，否则 cache-first 会让老用户永远拿到旧文件。
  */
-const CACHE = "sophrosyne-v35";
+const CACHE = "sophrosyne-v36";
 const ASSETS = [
   "./",
   "./index.html",

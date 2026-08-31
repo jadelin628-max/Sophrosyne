@@ -11,6 +11,7 @@ Sophrosyne.UI = (function () {
   let selectedChain = "main";
   let verdictTarget = null;
   let subGoalGoalId = null;
+  let pendingSettlement = null;
   // 开发开关：URL 带 ?dev 或 localStorage sophrosyne.dev=1 时显示坐标网格/轴标
   const DEV = (function () {
     try { return location.search.includes("dev") || localStorage.getItem("sophrosyne.dev") === "1"; }
@@ -566,12 +567,29 @@ Sophrosyne.UI = (function () {
     ).join("");
   }
   async function doSettle(btn) {
-    btn.disabled = true; const orig = btn.textContent; btn.textContent = "结算中…";
+    btn.disabled = true; const orig = btn.textContent; btn.textContent = "拟诏中…";
     try {
-      const r = await Engine.settleYear(state, true);
-      toast(r.llmFailed ? "史官缺席，以常例结算（" + r.llmFailed + "）。" : "岁末结算完成。");
+      const r = await Engine.proposeSettlement(state, true);
+      pendingSettlement = r;
+      renderSettleEntries(r);
+      $("#settle-modal").hidden = false;
     } catch (e) { toast("结算出错：" + e.message); }
-    btn.disabled = false; btn.textContent = orig; renderAll();
+    btn.disabled = false; btn.textContent = orig;
+  }
+  function effectsToText(eff) {
+    return Object.keys(eff || {}).map(k => k + ":" + eff[k]).join(",");
+  }
+  function renderSettleEntries(r) {
+    $("#settle-source").textContent = r.source === "llm" ? "史官拟定的草案（可编辑后确认）" : "本地常例草案（可编辑后确认）";
+    const el = $("#settle-entries");
+    const entries = (r.draft && r.draft.entries) || [];
+    el.innerHTML = entries.map((e, i) =>
+      '<div class="settle-entry">' +
+        '<input class="se-title" value="' + escapeHtml(e.title || "") + '" placeholder="标题">' +
+        '<input class="se-note" value="' + escapeHtml(e.note || "") + '" placeholder="评语">' +
+        '<input class="se-effects" value="' + escapeHtml(effectsToText(e.effects)) + '" placeholder="指标:数值（如 treasury:1000,support:2）">' +
+      '</div>'
+    ).join("") || '<p class="hint">（今日无待结算事务）</p>';
   }
   function openLlm() {
     $("#llm-result").hidden = true; $("#llm-result").textContent = ""; $("#llm-actions").hidden = true; $("#llm-modal").hidden = false;
@@ -670,6 +688,28 @@ Sophrosyne.UI = (function () {
       });
       Engine.adjudicateEvent(state, { text, decisions });
       $("#event-modal").hidden = true; renderAll(); toast("已报备并逐项裁决。");
+    });
+    $("#settle-apply").addEventListener("click", () => {
+      if (!pendingSettlement) return;
+      const entries = [];
+      $$("#settle-entries .settle-entry").forEach(row => {
+        const title = row.querySelector(".se-title").value.trim();
+        const note = row.querySelector(".se-note").value.trim();
+        const effects = {};
+        row.querySelector(".se-effects").value.split(",").forEach(pair => {
+          const idx = pair.indexOf(":"); if (idx <= 0) return;
+          const k = pair.slice(0, idx).trim(); const n = Number(pair.slice(idx + 1));
+          if (k && Number.isFinite(n)) effects[k] = n;
+        });
+        entries.push({ title, note, effects });
+      });
+      Engine.applySettlementDraft(state, { entries });
+      pendingSettlement = null;
+      $("#settle-modal").hidden = true; renderAll(); toast("岁末结算完成。");
+    });
+    $("#settle-reject").addEventListener("click", async () => {
+      const r = await Engine.proposeSettlement(state, false);
+      pendingSettlement = r; renderSettleEntries(r);
     });
 
     $("#goal-cancel").addEventListener("click", () => $("#goal-modal").hidden = true);

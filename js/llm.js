@@ -118,6 +118,45 @@ Sophrosyne.LLM = (function () {
     return obj.entries.filter(e => e && typeof e === "object" && (e.title || e.note || e.effects));
   }
 
+  // 严格结构校验：限制条目数、字段名与数值范围，丢弃非法项，保留本地数值封顶
+  const MAX_ENTRIES = 24;
+  function sanitizeDraft(obj) {
+    if (!obj || typeof obj !== "object") return null;
+    if (!Array.isArray(obj.entries)) return null;
+    const entries = [];
+    for (const e of obj.entries.slice(0, MAX_ENTRIES)) {
+      if (!e || typeof e !== "object") continue;
+      const title = (typeof e.title === "string" && e.title.trim()) ? e.title.trim().slice(0, 80) : "";
+      const note = (typeof e.note === "string") ? e.note.trim().slice(0, 200) : "";
+      const effects = {};
+      if (e.effects && typeof e.effects === "object") {
+        for (const k of Object.keys(e.effects)) {
+          if (!Metrics.DEFS[k]) continue;                      // 仅允许合法指标键
+          const v = Number(e.effects[k]);
+          if (!Number.isFinite(v)) continue;
+          const def = Metrics.DEFS[k];
+          const capped = def.max === 100 ? Math.max(-15, Math.min(15, v)) : Math.max(-100000, Math.min(100000, v));
+          effects[k] = Math.round(capped);
+        }
+      }
+      if (!title && !note && !Object.keys(effects).length) continue;
+      entries.push({ title, note, effects });
+    }
+    return {
+      title: (typeof obj.title === "string" ? obj.title.trim().slice(0, 80) : ""),
+      note: (typeof obj.note === "string" ? obj.note.trim().slice(0, 200) : ""),
+      entries,
+    };
+  }
+
+  // 提案式岁末结算：返回经严格校验的草案；解析失败抛错（引擎回退本地规则）
+  async function proposeSettlement(state, tasks) {
+    const text = await chat(state, buildSettlePrompt(state, tasks));
+    const draft = sanitizeDraft(extractJson(text));
+    if (!draft || !draft.entries.length) throw new Error("LLM 输出无法解析或为空");
+    return draft;
+  }
+
   // 通用史官评语（起居评语 / 复盘建议 / 盖棺定论）
   async function ask(state, task) {
     let extra = "";
@@ -151,5 +190,5 @@ Sophrosyne.LLM = (function () {
     return chat(state, prompt);
   }
 
-  return { settle, ask, posthumous, accession, chat, context, buildSettlePrompt, extractJson, SYSTEM, config, metricLegend };
+  return { settle, proposeSettlement, sanitizeDraft, ask, posthumous, accession, chat, context, buildSettlePrompt, extractJson, SYSTEM, config, metricLegend };
 })();

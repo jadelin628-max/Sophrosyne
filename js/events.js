@@ -192,8 +192,11 @@ Sophrosyne.Events = (function () {
       $("#set-llm-key").value = "";   // 不把真实密钥回填输入框：脱敏展示
       $("#set-llm-key").placeholder = api.storedLlmKey ? "已配置（脱敏 · 留空则保持不变，输入新值可覆盖）" : "sk-...";
       $("#set-llm-model").value = llm.model || "";
-      $("#set-llm-maxtokens").value = llm.maxTokens || 1024;
-      $("#set-prompts-settle").value = (S().settings.prompts && S().settings.prompts.settle) || "";
+      $("#set-llm-maxtokens").value = llm.maxTokens || 4096;
+      // 展示各类动作的当前生效提示词（覆盖值或默认全文），便于照改
+      for (const k of ["system", "settle", "posthumous", "accession"]) {
+        $("#set-prompts-" + k).value = LLM.prompt(S(), k);
+      }
       $("#set-dev").value = S().settings.devMode ? "1" : "0";
       const st = $("#llm-status");
       if (st) {
@@ -201,8 +204,15 @@ Sophrosyne.Events = (function () {
         else if (api.storedLlmKey || llm.baseUrl || llm.model) st.textContent = "部分配置：请补齐 Base URL、API Key 与模型名。";
         else st.textContent = "未配置：结算将使用本地确定性规则，不外发数据。";
       }
+      // 默认回到「基本」分类
+      $$(".settings-tabs .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === "basic"));
+      $$(".settings-panel").forEach(p => p.hidden = (p.dataset.panel !== "basic"));
       $("#settings-modal").hidden = false;
     });
+    $$(".settings-tabs .tab").forEach(tab => tab.addEventListener("click", () => {
+      $$(".settings-tabs .tab").forEach(t => t.classList.toggle("active", t === tab));
+      $$(".settings-panel").forEach(p => p.hidden = (p.dataset.panel !== tab.dataset.tab));
+    }));
     $("#status-row").addEventListener("click", () => {
       const nav = $("#status-row").dataset.nav;
       if (nav) api.openView(nav);
@@ -229,22 +239,24 @@ Sophrosyne.Events = (function () {
       if ($("#set-dynasty").value.trim()) S().dynasty.name = $("#set-dynasty").value.trim();
       if ($("#set-era").value.trim()) S().reign.eraName = $("#set-era").value.trim();
       const keyInput = $("#set-llm-key").value.trim();
-      const maxTokens = Math.max(256, Math.min(4096, Number($("#set-llm-maxtokens").value) || 1024));
+      const maxTokens = Math.max(512, Math.min(16384, Number($("#set-llm-maxtokens").value) || 4096));
       S().settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: keyInput || api.storedLlmKey, model: $("#set-llm-model").value.trim(), maxTokens };
       S().settings.prompts = S().settings.prompts || {};
-      S().settings.prompts.settle = $("#set-prompts-settle").value.trim();
+      for (const k of ["system", "settle", "posthumous", "accession"]) {
+        const v = $("#set-prompts-" + k).value.trim();
+        S().settings.prompts[k] = (v && v !== LLM.DEFAULT_PROMPTS[k]) ? v : "";
+      }
       const devChanged = ($("#set-dev").value === "1") !== !!S().settings.devMode;
       S().settings.devMode = $("#set-dev").value === "1";
       try { localStorage.setItem("sophrosyne.dev", S().settings.devMode ? "1" : "0"); } catch (e) {}
       Store.save(S()); $("#settings-modal").hidden = true; api.renderAll(); api.toast("已保存。");
       if (devChanged) setTimeout(() => location.reload(), 600);
     });
-    $("#prompt-reset").addEventListener("click", () => {
-      S().settings.prompts = S().settings.prompts || {};
-      S().settings.prompts.settle = "";
-      $("#set-prompts-settle").value = "";
-      api.toast("已恢复默认结算提示词（保存后生效）。");
-    });
+    $$("[data-reset-prompt]").forEach(btn => btn.addEventListener("click", () => {
+      const k = btn.dataset.resetPrompt;
+      $("#set-prompts-" + k).value = LLM.DEFAULT_PROMPTS[k];
+      api.toast("已恢复默认（保存后生效）。");
+    }));
     $("#llm-key-clear").addEventListener("click", () => {
       api.storedLlmKey = ""; $("#set-llm-key").value = ""; $("#set-llm-key").placeholder = "sk-...";
       api.toast("已清除已存密钥（点「保存」后生效）。");

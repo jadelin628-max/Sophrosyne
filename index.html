@@ -323,30 +323,62 @@
 
   <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" hidden>
     <div class="modal-card"><h2 id="settings-modal-title">设置</h2>
-      <label class="field"><span>国号</span><input id="set-dynasty" type="text" /></label>
-      <label class="field"><span>年号</span><input id="set-era" type="text" /></label>
+      <div class="settings-tabs" role="tablist">
+        <button class="tab active" data-tab="basic" role="tab">基本</button>
+        <button class="tab" data-tab="llm" role="tab">大模型</button>
+        <button class="tab" data-tab="prompts" role="tab">提示词</button>
+        <button class="tab" data-tab="dev" role="tab">开发</button>
+        <button class="tab" data-tab="data" role="tab">数据</button>
+      </div>
+
+      <section class="settings-panel" data-panel="basic">
+        <label class="field"><span>国号</span><input id="set-dynasty" type="text" /></label>
+        <label class="field"><span>年号</span><input id="set-era" type="text" /></label>
+      </section>
+
+      <section class="settings-panel" data-panel="llm" hidden>
+        <p class="hint" id="llm-disclosure">数据外发说明：配置后，岁末结算与「议定先帝」会把今日事务、在行制度与近期起居注摘要发送到你填写的 Base URL；API Key 仅保存在本机 localStorage，导出存档时自动剔除。</p>
+        <label class="field"><span>Base URL（OpenAI 兼容）</span><input id="set-llm-base" type="text" placeholder="https://api.openai.com/v1" /></label>
+        <label class="field"><span>API Key</span><input id="set-llm-key" type="password" placeholder="sk-..." autocomplete="off" /></label>
+        <button id="llm-key-clear" class="btn ghost" style="width:100%">清除已存密钥</button>
+        <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
+        <label class="field"><span>最大输出 token（512–16384）</span><input id="set-llm-maxtokens" type="number" min="512" max="16384" step="256" placeholder="4096" /></label>
+        <p class="hint" id="llm-status"></p>
+      </section>
+
+      <section class="settings-panel" data-panel="prompts" hidden>
+        <p class="hint">展示的是当前生效提示词；可直接修改，或点「恢复默认」回到内置版本。留空/与默认一致即使用默认。</p>
+        <div class="prompt-field">
+          <div class="row between"><span class="prompt-label">系统人设（system）</span><button class="prompt-reset" data-reset-prompt="system">恢复默认</button></div>
+          <textarea id="set-prompts-system" rows="5"></textarea>
+        </div>
+        <div class="prompt-field">
+          <div class="row between"><span class="prompt-label">岁末结算（settle）</span><button class="prompt-reset" data-reset-prompt="settle">恢复默认</button></div>
+          <textarea id="set-prompts-settle" rows="6"></textarea>
+        </div>
+        <div class="prompt-field">
+          <div class="row between"><span class="prompt-label">议定先帝（posthumous）</span><button class="prompt-reset" data-reset-prompt="posthumous">恢复默认</button></div>
+          <textarea id="set-prompts-posthumous" rows="4"></textarea>
+        </div>
+        <div class="prompt-field">
+          <div class="row between"><span class="prompt-label">即位诏书（accession）</span><button class="prompt-reset" data-reset-prompt="accession">恢复默认</button></div>
+          <textarea id="set-prompts-accession" rows="3"></textarea>
+        </div>
+      </section>
+
+      <section class="settings-panel" data-panel="dev" hidden>
+        <label class="field"><span>开发开关</span><select id="set-dev"><option value="0">关闭</option><option value="1">开启（显示坐标 / 无限制度 / 勤政即时完成）</option></select></label>
+        <p class="hint">开启后保存并刷新页面生效（建筑标签显示坐标，便于调整位置）。</p>
+      </section>
+
+      <section class="settings-panel" data-panel="data" hidden>
+        <div class="row"><button id="export-btn" class="btn">导出存档</button><button id="import-btn" class="btn">导入存档</button><input id="import-file" type="file" accept="application/json" hidden /></div>
+        <button id="reset-btn" class="btn danger" style="width:100%">重置存档（清空全部数据）</button>
+        <p class="hint center" id="app-version"></p>
+      </section>
+
+      <hr class="sep" />
       <div class="row"><button id="settings-cancel" class="btn ghost">取消</button><button id="settings-save" class="btn primary">保存</button></div>
-      <hr class="sep" />
-      <h3 class="sub">大模型（史官 AI，可选）</h3>
-      <p class="hint" id="llm-disclosure">数据外发说明：配置后，岁末结算与史官问答会把今日事务、在行制度与近期起居注摘要发送到你填写的 Base URL；API Key 仅保存在本机 localStorage，导出存档时自动剔除。</p>
-      <label class="field"><span>Base URL（OpenAI 兼容）</span><input id="set-llm-base" type="text" placeholder="https://api.openai.com/v1" /></label>
-      <label class="field"><span>API Key</span><input id="set-llm-key" type="password" placeholder="sk-..." autocomplete="off" /></label>
-      <button id="llm-key-clear" class="btn ghost" style="width:100%">清除已存密钥</button>
-      <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
-      <label class="field"><span>最大输出 token</span><input id="set-llm-maxtokens" type="number" min="256" max="4096" step="64" placeholder="1024" /></label>
-      <p class="hint" id="llm-status"></p>
-      <hr class="sep" />
-      <h3 class="sub">史官提示词（可自定义）</h3>
-      <p class="hint">留空使用内置默认；填写则覆盖默认。改坏可随时「恢复默认」。</p>
-      <label class="field"><span>岁末结算提示词</span><textarea id="set-prompts-settle" rows="6" placeholder="留空=默认"></textarea></label>
-      <button id="prompt-reset" class="btn ghost" style="width:100%">恢复默认提示词</button>
-      <hr class="sep" />
-      <h3 class="sub">开发模式</h3>
-      <label class="field"><span>开发开关</span><select id="set-dev"><option value="0">关闭</option><option value="1">开启（显示坐标 / 无限制度 / 勤政即时完成）</option></select></label>
-      <hr class="sep" />
-      <div class="row"><button id="export-btn" class="btn">导出存档</button><button id="import-btn" class="btn">导入存档</button><input id="import-file" type="file" accept="application/json" hidden /></div>
-      <button id="reset-btn" class="btn danger" style="width:100%">重置存档（清空全部数据）</button>
-      <p class="hint center" id="app-version"></p>
     </div>
   </div>
 

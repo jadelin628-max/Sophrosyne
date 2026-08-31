@@ -31,7 +31,7 @@ Sophrosyne.Store = (function () {
     const initM = Metrics ? Metrics.initialMetrics() : {};
     return {
       version: 7,
-      settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "", maxTokens: 1024 }, prompts: {}, devMode: false },
+      settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "", maxTokens: 4096 }, prompts: {}, devMode: false },
       dynasty: { name: "未定", lineage: [] },
       reign: {
         eraName: "建元",

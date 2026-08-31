@@ -1,7 +1,7 @@
 /* Sophrosyne — Service Worker（离线缓存）
  * 发版时务必递增 CACHE 版本号，否则 cache-first 会让老用户永远拿到旧文件。
  */
-const CACHE = "sophrosyne-v40";
+const CACHE = "sophrosyne-v41";
 const ASSETS = [
   "./",
   "./index.html",
@@ -31,6 +31,22 @@ const ASSETS = [
   "./assets/generated/interior_wenyuange.webp",
   "./assets/generated/interior_yangxindian.webp",
   "./assets/generated/interior_yuhuayuan.webp",
+  "./assets/generated/interior_baohe.webp",
+  "./assets/generated/interior_changyinge.webp",
+  "./assets/generated/interior_cininggong.webp",
+  "./assets/generated/interior_jiaotaidian.webp",
+  "./assets/generated/interior_kunninggong.webp",
+  "./assets/generated/interior_neiweufu.webp",
+  "./assets/generated/interior_ningshougong.webp",
+  "./assets/generated/interior_qintianjian.webp",
+  "./assets/generated/interior_shangshufang.webp",
+  "./assets/generated/interior_shenwumen.webp",
+  "./assets/generated/interior_taihemen.webp",
+  "./assets/generated/interior_wenhuadian.webp",
+  "./assets/generated/interior_wumen.webp",
+  "./assets/generated/interior_wuyingdian.webp",
+  "./assets/generated/interior_yushanfang.webp",
+  "./assets/generated/interior_zhonghedian.webp",
   "./assets/transparent/baohe.webp",
   "./assets/transparent/cehua_donghua.webp",
   "./assets/transparent/changyinge.webp",
@@ -49,7 +65,6 @@ const ASSETS = [
   "./assets/transparent/taihedian.webp",
   "./assets/transparent/taihemen.webp",
   "./assets/transparent/taimiao.webp",
-  "./assets/transparent/ui_gold_button.webp",
   "./assets/transparent/ui_jade_seal.webp",
   "./assets/transparent/wenhuadian.webp",
   "./assets/transparent/wenyuange.webp",

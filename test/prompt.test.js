@@ -10,14 +10,18 @@ let failed = 0;
 function assert(c,m){ if(c){console.log("  ok -",m);} else {console.error("  FAIL -",m); failed++;} }
 function freshState(){ return E.tick(Store.reset()); }
 
-console.log("[1] 默认提示词存在且 prompt() 覆盖/回退");
+console.log("[1] 默认提示词四类齐全且 prompt() 覆盖/回退");
 {
   assert(LLM.DEFAULT_PROMPTS && typeof LLM.DEFAULT_PROMPTS.system === "string", "默认 system 提示词存在");
   assert(LLM.DEFAULT_PROMPTS.settle && LLM.DEFAULT_PROMPTS.posthumous && LLM.DEFAULT_PROMPTS.accession, "默认 settle/posthumous/accession 提示词存在");
   const s = freshState();
-  assert(LLM.prompt(s, "settle") === LLM.DEFAULT_PROMPTS.settle, "未覆盖时回退默认");
-  s.settings.prompts = { settle: "自定义结算提示词" };
-  assert(LLM.prompt(s, "settle") === "自定义结算提示词", "覆盖生效");
+  for (const k of ["system", "settle", "posthumous", "accession"]) {
+    assert(LLM.prompt(s, k) === LLM.DEFAULT_PROMPTS[k], k + " 未覆盖时回退默认");
+  }
+  s.settings.prompts = { system: "自定义人设", settle: "自定义结算", posthumous: "自定义议定先帝", accession: "自定义即位" };
+  for (const k of ["system", "settle", "posthumous", "accession"]) {
+    assert(LLM.prompt(s, k) === s.settings.prompts[k], k + " 覆盖生效");
+  }
   s.settings.prompts.settle = "  ";
   assert(LLM.prompt(s, "settle") === LLM.DEFAULT_PROMPTS.settle, "空白覆盖回退默认");
 }
@@ -47,13 +51,12 @@ console.log("[3] sanitizeDraft 校验新增字段（双语/国策/评述）");
   assert(d.subGoalVerdicts.length === 1 && d.subGoalVerdicts[0].subGoalId === "sg1", "阶段目标评述校验");
 }
 
-console.log("[4] max_tokens 上限收敛（引擎 clamps）");
+console.log("[4] max_tokens 默认与配置读取");
 {
-  // chat 内部对 maxTokens 做 256..4096 clamp；此处校验 config 读取与草拟路径不抛错
   const s = freshState();
-  s.settings.llm = { baseUrl: "", apiKey: "", model: "", maxTokens: 99999 };
-  const cfg = LLM.config(s);
-  assert(cfg.maxTokens === 99999, "settings.llm.maxTokens 读取");
+  assert(s.settings.llm.maxTokens === 4096, "默认 maxTokens 为 4096");
+  s.settings.llm.maxTokens = 99999;
+  assert(LLM.config(s).maxTokens === 99999, "settings.llm.maxTokens 读取（chat 内部 clamp 到 512–16384）");
 }
 
 if (failed) { console.error("PROMPT FAIL — " + failed + " 项未过"); process.exit(1); }

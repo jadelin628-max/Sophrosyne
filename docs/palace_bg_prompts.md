@@ -1,5 +1,9 @@
 # 宫殿背景图生成提示词（0.6.0）
 
+> ✅ **2026-09-01 已全部生成并接入**：16 座宫殿的 `interior_<key>.webp`（1024×1536 竖版，
+> 已去除 AI 水印）已生成，`styles.css` 与 `sw.js`（缓存 v41）均已更新。
+> 原始 PNG 备份位于 `assets/generated/_raw/`。
+
 用于为以下「尚无专属背景、暂复用他殿背景」的宫殿生成室内/门楼背景图。
 生成后命名 `assets/generated/interior_<key>.webp`（约 1024×1536 或 16:9 竖版），
 并在 `styles.css` 中把对应 `#view-*` 的背景 url 改为新文件。

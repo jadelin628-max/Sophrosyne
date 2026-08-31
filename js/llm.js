@@ -108,7 +108,7 @@ Sophrosyne.LLM = (function () {
     const cfg = config(state);
     if (!cfg.apiKey || !cfg.baseUrl || !cfg.model) throw new Error("请先在「设置」配置大模型（Base URL / API Key / 模型名）。");
     const url = cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions";
-    const mt = Math.max(256, Math.min(4096, Number(maxTokens) || 1024));
+    const mt = Math.max(512, Math.min(16384, Number(maxTokens) || 4096));
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
     let res;

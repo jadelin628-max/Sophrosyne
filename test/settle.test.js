@@ -53,7 +53,7 @@ console.log("[3] applySettlementDraft 确认后入账（封顶 + 清空今日事
   assert(r && r.applied === 1, "应用 1 条草案");
   assert(s.reign.todayTasks.length === 0, "确认后清空今日事务");
   assert(Math.abs(s.reign.metrics.order - (before + 15)) <= 1, "入账按 0-100 指标 ±15 封顶");
-  assert(s.log.length >= 1 && s.log[0].text.indexOf("史官评语") >= 0, "写入起居注含标题与评语");
+  assert(s.log.length >= 1 && s.log[0].modern && s.log[0].modern.indexOf("史官评语") >= 0, "写入起居注含标题与评语（modern）");
 }
 
 if (failed) { console.error("SETTLE FAIL — " + failed + " 项未过"); process.exit(1); }

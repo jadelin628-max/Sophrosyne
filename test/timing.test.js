@@ -21,14 +21,17 @@ console.log("[1] 临朝到时 → 待确认，不自动记功、不阻塞");
   assert(r && r.number === 1 && s.activeFocus === null, "待确认后手动功成入账");
 }
 
-console.log("[2] 未到时也可手动功成/失守");
+console.log("[2] 未到时不可功成，仅可失守廷议；到期后才可功成");
 {
   const s = freshState();
   E.startFocus(s, "read", "main", "读书");
-  assert(E.completeFocus(s).number === 1, "未到时手动功成");
+  const r = E.completeFocus(s);
+  assert(r && r.blocked === true, "未到时手动功成被拒");
+  assert(E.abandonFocus(s).target === "main", "未到时手动失守→廷议");
   const s2 = freshState();
-  E.startFocus(s2, "read", "main", "");
-  assert(E.abandonFocus(s2).target === "main", "未到时手动失守→廷议");
+  E.startFocus(s2, "read", "main", "读书");
+  s2.activeFocus.endsAt = Date.now() - 1000;
+  assert(E.completeFocus(s2).number === 1, "到期后手动功成");
 }
 
 console.log("[3] 预约不可覆盖");
@@ -52,36 +55,41 @@ console.log("[4] 预约逾期不可履约，只能确认失信");
   assert(m && m.missed === true, "确认失信入账（威望-1）");
 }
 
-console.log("[5] 旧 v5 档迁移（补 status、补制度规则骨架、写回 v6、保留数据）");
+console.log("[5] 旧 v6 档迁移（补制度规则骨架/金口玉言链/目标字段、写回 v7、保留数据）");
 {
   const legacy = E.init();
-  legacy.version = 5;
+  legacy.version = 6;
   legacy.dynasty.name = "大夏";          // 校验自定义字段保留
   legacy.policies = [{ id:"p1", name:"子时后不碰手机", group:"作息", status:"active", solidity:20, solidityCap:100, survivalDays:3, collapseCount:0, level:0, revive:0, strengthened:false, createdAt:"2024-01-01", parentId:null }];
+  legacy.goals = [{ id:"g1", name:"考研上岸", flavor:"", status:"active", createdAt:"2024-01-01", resolvedAt:null, subGoals:[] }];
+  delete legacy.chains.oath;             // 模拟 v6 无金口玉言链
   legacy.activeFocus = { sceneId:"audience", name:"御门听政", gov:"御门听政、面奏章疏", chain:"main", realTask:"", startedAt:Date.now(), endsAt: Date.now()-1000, minutes:60 };
   legacy.activeAppointment = { sceneId:"read", name:"研读经典", appointment:"沐浴焚香", scheduledAt:Date.now(), dueAt: Date.now()+60000 };
-  mem["sophrosyne.v5"] = JSON.stringify(legacy);
-  delete mem["sophrosyne.v6"]; delete mem["sophrosyne.v6.bak"];
+  mem["sophrosyne.v6"] = JSON.stringify(legacy);
+  delete mem["sophrosyne.v7"]; delete mem["sophrosyne.v7.bak"];
   const s = Store.load();
   assert(s.activeFocus.status === "awaiting-confirmation", "旧进行中临朝迁移为待确认");
   assert(s.activeAppointment.status === "pending", "旧预约迁移为待履约");
   assert(s.dynasty.name === "大夏", "自定义字段保留");
-  assert(s.version === 6, "迁移后版本号为 6");
+  assert(s.version === 7, "迁移后版本号为 7");
   const pol = s.policies.find(p => p.id === "p1");
   assert(pol && pol.rule && Array.isArray(pol.rule.exceptions), "旧制度补默认规则骨架");
   assert(pol.name === "子时后不碰手机" && pol.group === "作息", "旧制度名称/分组保留");
-  assert("sophrosyne.v6" in mem, "迁移后写回 v6 档");
+  assert(s.chains.oath && Array.isArray(s.chains.oath.records), "补金口玉言链");
+  const g = s.goals.find(x => x.id === "g1");
+  assert(g && g.title === "" && g.verdict === "", "旧目标补 title/verdict 缺省");
+  assert("sophrosyne.v7" in mem, "迁移后写回 v7 档");
 }
 
-console.log("[5b] 旧 v4 档直接迁到 v6");
+console.log("[5b] 旧 v5 档直接迁到 v7");
 {
   const legacy = E.init();
-  legacy.version = 4;
+  legacy.version = 5;
   legacy.dynasty.name = "大夏";
-  mem["sophrosyne.v4"] = JSON.stringify(legacy);
-  delete mem["sophrosyne.v6"]; delete mem["sophrosyne.v6.bak"]; delete mem["sophrosyne.v5"];
+  mem["sophrosyne.v5"] = JSON.stringify(legacy);
+  delete mem["sophrosyne.v7"]; delete mem["sophrosyne.v7.bak"]; delete mem["sophrosyne.v6"];
   const s = Store.load();
-  assert(s.version === 6 && s.dynasty.name === "大夏", "v4 档自动迁移并写回 v6");
+  assert(s.version === 7 && s.dynasty.name === "大夏", "v5 档自动迁移并写回 v7");
 }
 
 if (failed) { console.error("TIMING FAIL — "+failed+" 项未过"); process.exit(1); }

@@ -31,10 +31,8 @@
       <span class="status-timer" id="status-timer"></span>
     </div>
     <div class="stats">
-      <div class="stat"><span class="k">国库</span><span class="v" id="stat-treasury">—</span></div>
-      <div class="stat"><span class="k">民心</span><span class="v" id="stat-support">—</span></div>
-      <div class="stat"><span class="k">威望</span><span class="v" id="stat-prestige">—</span></div>
       <div class="stat"><span class="k">勤政</span><span class="v" id="stat-main">0</span></div>
+      <div class="stat"><span class="k">金口玉言</span><span class="v" id="stat-oath">0</span></div>
     </div>
     <button id="settings-btn" class="gear" title="设置" aria-label="设置">⚙</button>
     <div class="status-actions">
@@ -80,6 +78,7 @@
       <div class="view-details"><button class="back-btn" data-close>收起详情</button>
         <div class="panel"><h2>主要政务（勤政 · 三三制）</h2><div id="chain-main"></div><div id="chain-main-precedents"></div></div>
         <div class="panel"><h2>次要政务（常备）</h2><div id="chain-reserve"></div><div id="chain-reserve-precedents"></div></div>
+        <div class="panel"><h2>金口玉言（预约链）</h2><div id="chain-oath"></div><div id="chain-oath-precedents"></div></div>
       </div>
     </section>
 
@@ -91,7 +90,7 @@
         <div class="panel"><h2>今日国是</h2><ul id="court-today" class="kv"></ul></div>
         <div class="panel"><h2>国力各项</h2><div id="court-metrics" class="metric-list"></div></div>
         <div class="panel"><h2>突发事件</h2><div id="event-status"></div></div>
-        <div class="panel"><h2>大目标（王朝敌人）</h2><div id="goal-list"></div></div>
+        <div class="panel"><h2>国策</h2><div id="goal-list"></div></div>
         <div class="panel"><h2>近闻（起居注摘）</h2><ul id="court-log" class="log"></ul></div>
       </div>
     </section>
@@ -136,44 +135,32 @@
     <section id="view-yuhuayuan" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="yuhuayuan"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="yuhuayuan"></div></div>
-      </div>
     </section>
 
     <!-- 太和门：外朝 · 御门听政 -->
     <section id="view-taihemen" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="taihemen"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="taihemen"></div></div>
-      </div>
     </section>
 
     <!-- 保和殿：外朝 · 殿试取士 -->
     <section id="view-baohe" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="baohe"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="baohe"></div></div>
-      </div>
     </section>
 
     <!-- 文华殿：文教 · 经筵讲学 -->
     <section id="view-wenhuadian" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="wenhuadian"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="wenhuadian"></div></div>
-      </div>
     </section>
 
-    <!-- 坤宁宫：后宫 · 琴瑟 -->
+    <!-- 坤宁宫：后宫 · 琴瑟（岁末结算） -->
     <section id="view-kunninggong" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="kunninggong"></div>
       <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="kunninggong"></div></div>
+        <div class="panel"><h2>岁末结算（一年一度）</h2><p class="hint" id="settle-hint"></p><p class="hint">未配置大模型时按场景默认增减；配置后交给大模型按真实任务风味化并决定增减。</p></div>
       </div>
     </section>
 
@@ -181,27 +168,18 @@
     <section id="view-neiweufu" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="neiweufu"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="neiweufu"></div></div>
-      </div>
     </section>
 
     <!-- 御膳房：内廷 · 药膳 -->
     <section id="view-yushanfang" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="yushanfang"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="yushanfang"></div></div>
-      </div>
     </section>
 
     <!-- 畅音阁：内廷 · 宴乐 -->
     <section id="view-changyinge" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="changyinge"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>本殿事务</h2><div data-venue-info="changyinge"></div></div>
-      </div>
     </section>
 
     <!-- 上书房：内廷 · 育才（子嗣） -->
@@ -213,13 +191,10 @@
       </div>
     </section>
 
-    <!-- 钦天监：内廷 · 历法祭祀（岁末结算） -->
+    <!-- 钦天监：内廷 · 历法祭祀 -->
     <section id="view-qintianjian" class="view palace-view">
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="qintianjian"></div>
-      <div class="view-details"><button class="back-btn" data-close>收起详情</button>
-        <div class="panel"><h2>岁末结算（一年一度）</h2><p class="hint" id="settle-hint"></p><p class="hint">未配置大模型时按场景默认增减；配置后交给大模型按真实任务风味化并决定增减。</p></div>
-      </div>
     </section>
 
     <!-- 奉先殿：内廷 · 宗庙（实录 + 禅位） -->
@@ -237,6 +212,42 @@
         <div class="banner" id="abdicate-banner" hidden><p>圣寿已至，可择日<b>禅位 / 驾崩</b>。</p></div>
         <div class="panel"><h2>奉先殿 · 历代皇帝实录</h2><div id="lineage"></div></div>
       </div>
+    </section>
+
+    <!-- 中和殿：外朝 · 礼仪 -->
+    <section id="view-zhonghedian" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="zhonghedian"></div>
+    </section>
+
+    <!-- 交泰殿：内廷 · 宫规 -->
+    <section id="view-jiaotaidian" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="jiaotaidian"></div>
+    </section>
+
+    <!-- 午门：外朝 · 颁诏 -->
+    <section id="view-wumen" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="wumen"></div>
+    </section>
+
+    <!-- 神武门：北门 · 巡阅 -->
+    <section id="view-shenwumen" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="shenwumen"></div>
+    </section>
+
+    <!-- 慈宁宫：内廷 · 奉养 -->
+    <section id="view-cininggong" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="cininggong"></div>
+    </section>
+
+    <!-- 宁寿宫：内廷 · 颐养 -->
+    <section id="view-ningshougong" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="ningshougong"></div>
     </section>
   </main>
 
@@ -259,17 +270,18 @@
 
   <div id="abdicate-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="abdicate-modal-title" hidden>
     <div class="modal-card"><h2 id="abdicate-modal-title">禅位 / 驾崩</h2><p class="context">结算谥号庙号、起居注变实录，新君继位；制度固化度保留。</p>
-      <label class="field"><span>谥号评定方式</span><select id="abdicate-mode"><option value="rule">按各指标增减自动评定</option><option value="llm">请大模型评定（需已配置）</option></select></label>
+      <label class="field"><span>谥号评定方式</span><select id="abdicate-mode"><option value="rule">按各指标增减自动评定</option><option value="llm">议定先帝（请大模型，需已配置）</option></select></label>
       <label class="field"><span>继位人选</span><select id="abdicate-heir"><option value="">（无子嗣，宗室即位）</option></select></label>
+      <label class="field"><span>新君年号（留空自动）</span><input id="abdicate-era" type="text" placeholder="如：建元" /></label>
       <div class="row"><button id="abdicate-cancel" class="btn ghost">再等等</button><button id="abdicate-confirm" class="btn danger">确认禅位</button></div>
     </div>
   </div>
 
   <div id="goal-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="goal-modal-title" hidden>
-    <div class="modal-card"><h2 id="goal-modal-title">立大志（王朝敌人）</h2>
-      <label class="field"><span>大目标（现实）</span><input id="goal-name" type="text" placeholder="如：考研上岸" /></label>
-      <label class="field"><span>敌人风味（可选）</span><input id="goal-flavor" type="text" placeholder="如：击退北方游牧" /></label>
-      <div class="row"><button id="goal-cancel" class="btn ghost">取消</button><button id="goal-save" class="btn primary">立大志</button></div>
+    <div class="modal-card"><h2 id="goal-modal-title">定国策</h2>
+      <label class="field"><span>国策（现实目标，可为改革亦可为御敌）</span><input id="goal-name" type="text" placeholder="如：考研上岸 / 整顿作息" /></label>
+      <label class="field"><span>风味化（可选，留空交由大模型）</span><input id="goal-flavor" type="text" placeholder="如：推行新政、整饬吏治" /></label>
+      <div class="row"><button id="goal-cancel" class="btn ghost">取消</button><button id="goal-save" class="btn primary">定国策</button></div>
     </div>
   </div>
 
@@ -321,21 +333,20 @@
       <label class="field"><span>API Key</span><input id="set-llm-key" type="password" placeholder="sk-..." autocomplete="off" /></label>
       <button id="llm-key-clear" class="btn ghost" style="width:100%">清除已存密钥</button>
       <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
+      <label class="field"><span>最大输出 token</span><input id="set-llm-maxtokens" type="number" min="256" max="4096" step="64" placeholder="1024" /></label>
       <p class="hint" id="llm-status"></p>
+      <hr class="sep" />
+      <h3 class="sub">史官提示词（可自定义）</h3>
+      <p class="hint">留空使用内置默认；填写则覆盖默认。改坏可随时「恢复默认」。</p>
+      <label class="field"><span>岁末结算提示词</span><textarea id="set-prompts-settle" rows="6" placeholder="留空=默认"></textarea></label>
+      <button id="prompt-reset" class="btn ghost" style="width:100%">恢复默认提示词</button>
+      <hr class="sep" />
+      <h3 class="sub">开发模式</h3>
+      <label class="field"><span>开发开关</span><select id="set-dev"><option value="0">关闭</option><option value="1">开启（显示坐标 / 无限制度 / 勤政即时完成）</option></select></label>
       <hr class="sep" />
       <div class="row"><button id="export-btn" class="btn">导出存档</button><button id="import-btn" class="btn">导入存档</button><input id="import-file" type="file" accept="application/json" hidden /></div>
       <button id="reset-btn" class="btn danger" style="width:100%">重置存档（清空全部数据）</button>
       <p class="hint center" id="app-version"></p>
-    </div>
-  </div>
-
-  <div id="llm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="llm-modal-title" hidden>
-    <div class="modal-card"><h2 id="llm-modal-title">请史官</h2>
-      <label class="field"><span>任务</span><select id="llm-task"><option value="diary">今日起居评语</option><option value="review">朝政复盘建议</option><option value="posthumous">盖棺定论（谥号评语）</option></select></label>
-      <p class="hint">召唤史官时会发送当前事务、在行制度与近期起居注摘要。</p>
-      <button id="llm-ask" class="btn primary" style="width:100%">召唤史官</button>
-      <div id="llm-result" class="llm-result" hidden></div>
-      <div class="row" id="llm-actions" hidden><button id="llm-close" class="btn ghost">关闭</button><button id="llm-append" class="btn">采纳入起居注</button></div>
     </div>
   </div>
 

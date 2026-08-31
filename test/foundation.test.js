@@ -43,7 +43,7 @@ const deltas = M.deltas(base, m);
 assert(deltas.population === 100000, "人口增减 +10 万");
 
 console.log("[6] 场景模板");
-assert(Scenes.all().length === 24, "24 个场景");
+assert(Scenes.all().length === 35, "35 个场景");
 const s = Scenes.get("audience");
 assert(s && s.domain === "前朝", "御门听政 · 前朝");
 assert(s.appointment === "沐浴更衣·备朝", "预约前置绑定");

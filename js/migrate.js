@@ -1,6 +1,6 @@
 /* Sophrosyne — 领域状态迁移（旧档归一化 + 深合并骨架）
  * 独立模块：把「旧 schema → 当前 schema」的规则从持久化层剥离，便于单独测试。
- * 当前 schema：v6（0.5.0）；可迁移 v5（0.4.1）与更早的 v4 存档。
+ * 当前 schema：v7（0.6.0）；可迁移 v6（0.5.0）、v5（0.4.1）与更早的 v4 存档。
  */
 window.Sophrosyne = window.Sophrosyne || {};
 Sophrosyne.Migrate = (function () {
@@ -27,7 +27,19 @@ Sophrosyne.Migrate = (function () {
         }
       }
     }
-    s.version = 6;
+    // v6 → v7：金口玉言链（chains.oath）与目标风味化字段缺省补齐（缺失即回默认，运行时按 g.title||g.name 兜底）
+    if (s.chains && typeof s.chains === "object" && !s.chains.oath) {
+      s.chains.oath = { kind: "oath", records: [], precedents: [] };
+    }
+    if (Array.isArray(s.goals)) {
+      for (const g of s.goals) {
+        if (!g || typeof g !== "object") continue;
+        if (g.title === undefined) g.title = "";
+        if (g.verdict === undefined) g.verdict = "";
+        for (const sg of (g.subGoals || [])) if (sg && sg.verdict === undefined) sg.verdict = "";
+      }
+    }
+    s.version = 7;
     return s;
   }
 

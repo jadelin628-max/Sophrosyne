@@ -3,6 +3,8 @@ require("./_env.js");
 
 const E = globalThis.Sophrosyne.Engine;
 let state = E.init();
+// 开发模式：让临朝即时可功成，便于冒烟测试走完「开始→功成」流程（计时规则由 timing.test 覆盖）
+state.settings.devMode = true;
 
 function assert(cond, msg) {
   if (!cond) { console.error("FAIL:", msg); process.exit(1); }

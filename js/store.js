@@ -1,10 +1,10 @@
-/* Sophrosyne — 数据层（localStorage schema + 持久化）v6 */
+/* Sophrosyne — 数据层（localStorage schema + 持久化）v7 */
 window.Sophrosyne = window.Sophrosyne || {};
 Sophrosyne.Store = (function () {
-  const KEY = "sophrosyne.v6";
-  const BACKUP_KEY = "sophrosyne.v6.bak";
-  // 旧档依次尝试：v5（0.4.1）、v4（更早）；命中即迁移并写回 v6
-  const LEGACY_KEYS = ["sophrosyne.v5", "sophrosyne.v4"];
+  const KEY = "sophrosyne.v7";
+  const BACKUP_KEY = "sophrosyne.v7.bak";
+  // 旧档依次尝试：v6（0.5.0）、v5（0.4.1）、v4（更早）；命中即迁移并写回 v7
+  const LEGACY_KEYS = ["sophrosyne.v6", "sophrosyne.v5", "sophrosyne.v4"];
   const Migrate = window.Sophrosyne.Migrate;   // 状态迁移独立模块（需先于 store.js 加载）
   let lastMirrored = null;
 
@@ -30,8 +30,8 @@ Sophrosyne.Store = (function () {
     const Metrics = window.Sophrosyne.Metrics;
     const initM = Metrics ? Metrics.initialMetrics() : {};
     return {
-      version: 6,
-      settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "" } },
+      version: 7,
+      settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "", maxTokens: 1024 }, prompts: {}, devMode: false },
       dynasty: { name: "未定", lineage: [] },
       reign: {
         eraName: "建元",
@@ -44,12 +44,14 @@ Sophrosyne.Store = (function () {
         baseline: Metrics ? Metrics.initialMetrics() : {}, // 登基快照（供增减结算），须与 metrics 各自独立
         attributes: { health: 50, energy: 50, talent: 50, intellect: 50, composure: 50, charm: 50, prestige: 50 },
         todayTasks: [],              // 今日政务/事务（岁末结算）
+        digest: "",                  // 上轮结算后的起居录压缩摘要（供下次 LLM 提示词）
       },
       heirs: [],                     // 子嗣 [{id,name,gender,age,attributes,birthDate}]
       goals: [],
       chains: {
         main: newChain("main"),      // 主要政务
         reserve: newChain("reserve"),// 次要政务
+        oath: newChain("oath"),      // 金口玉言（预约链）
         appointment: { active: null, history: [] }, // 预约（无守信指数）
       },
       policies: [],                  // 制度树（固化度 + 分组）
@@ -96,7 +98,7 @@ Sophrosyne.Store = (function () {
   }
 
   function save(state) {
-    state.version = 6;
+    state.version = 7;
     let json;
     try { json = JSON.stringify(state); }
     catch (e) { console.error("存档序列化失败", e); warn("存档失败：数据异常。"); return false; }

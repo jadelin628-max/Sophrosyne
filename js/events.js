@@ -102,7 +102,8 @@ Sophrosyne.Events = (function () {
       $("#event-modal").hidden = true; api.renderAll(); api.toast("已报备并逐项裁决。");
     });
     $("#settle-apply").addEventListener("click", () => {
-      if (!api.pendingSettlement) return;
+      const draft = api.pendingSettlement && api.pendingSettlement.draft;
+      if (!draft) return;
       const entries = [];
       $$("#settle-entries .settle-entry").forEach(row => {
         const title = row.querySelector(".se-title").value.trim();
@@ -113,9 +114,11 @@ Sophrosyne.Events = (function () {
           const k = pair.slice(0, idx).trim(); const n = Number(pair.slice(idx + 1));
           if (k && Number.isFinite(n)) effects[k] = n;
         });
-        entries.push({ title, note, effects });
+        const classical = (row.querySelector(".se-classical") || {}).value || "";
+        const modern = (row.querySelector(".se-modern") || {}).value || "";
+        entries.push({ title, note, effects, classical, modern });
       });
-      Engine.applySettlementDraft(S(), { entries });
+      Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalVerdicts: draft.subGoalVerdicts });
       api.pendingSettlement = null;
       $("#settle-modal").hidden = true; api.renderAll(); api.toast("岁末结算完成。");
     });
@@ -132,7 +135,7 @@ Sophrosyne.Events = (function () {
     $("#goal-cancel").addEventListener("click", () => $("#goal-modal").hidden = true);
     $("#goal-save").addEventListener("click", () => {
       const name = $("#goal-name").value.trim();
-      if (!name) { api.toast("请输入大目标。"); return; }
+      if (!name) { api.toast("请输入国策名。"); return; }
       Engine.addGoal(S(), { name, flavor: $("#goal-flavor").value.trim() });
       $("#goal-modal").hidden = true; $("#goal-name").value = ""; $("#goal-flavor").value = ""; api.renderAll();
     });
@@ -171,9 +174,10 @@ Sophrosyne.Events = (function () {
     $("#abdicate-confirm").addEventListener("click", async () => {
       const mode = $("#abdicate-mode").value;
       const heirId = $("#abdicate-heir").value || null;
+      const eraName = ($("#abdicate-era") ? $("#abdicate-era").value.trim() : "") || null;
       const btn = $("#abdicate-confirm"); btn.disabled = true; btn.textContent = "结算中…";
       let r;
-      try { r = await Engine.abdicate(S(), "禅位", { mode, heirId }); }
+      try { r = await Engine.abdicate(S(), "禅位", { mode, heirId, eraName }); }
       catch (e) { api.toast("驾崩出错：" + e.message); btn.disabled = false; btn.textContent = "确认禅位"; return; }
       btn.disabled = false; btn.textContent = "确认禅位";
       $("#abdicate-modal").hidden = true; api.renderAll();
@@ -188,6 +192,9 @@ Sophrosyne.Events = (function () {
       $("#set-llm-key").value = "";   // 不把真实密钥回填输入框：脱敏展示
       $("#set-llm-key").placeholder = api.storedLlmKey ? "已配置（脱敏 · 留空则保持不变，输入新值可覆盖）" : "sk-...";
       $("#set-llm-model").value = llm.model || "";
+      $("#set-llm-maxtokens").value = llm.maxTokens || 1024;
+      $("#set-prompts-settle").value = (S().settings.prompts && S().settings.prompts.settle) || "";
+      $("#set-dev").value = S().settings.devMode ? "1" : "0";
       const st = $("#llm-status");
       if (st) {
         if (api.llmConfigured()) st.textContent = "已配置：Base URL / 模型 / 密钥均已就绪。";
@@ -222,8 +229,21 @@ Sophrosyne.Events = (function () {
       if ($("#set-dynasty").value.trim()) S().dynasty.name = $("#set-dynasty").value.trim();
       if ($("#set-era").value.trim()) S().reign.eraName = $("#set-era").value.trim();
       const keyInput = $("#set-llm-key").value.trim();
-      S().settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: keyInput || api.storedLlmKey, model: $("#set-llm-model").value.trim() };
+      const maxTokens = Math.max(256, Math.min(4096, Number($("#set-llm-maxtokens").value) || 1024));
+      S().settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: keyInput || api.storedLlmKey, model: $("#set-llm-model").value.trim(), maxTokens };
+      S().settings.prompts = S().settings.prompts || {};
+      S().settings.prompts.settle = $("#set-prompts-settle").value.trim();
+      const devChanged = ($("#set-dev").value === "1") !== !!S().settings.devMode;
+      S().settings.devMode = $("#set-dev").value === "1";
+      try { localStorage.setItem("sophrosyne.dev", S().settings.devMode ? "1" : "0"); } catch (e) {}
       Store.save(S()); $("#settings-modal").hidden = true; api.renderAll(); api.toast("已保存。");
+      if (devChanged) setTimeout(() => location.reload(), 600);
+    });
+    $("#prompt-reset").addEventListener("click", () => {
+      S().settings.prompts = S().settings.prompts || {};
+      S().settings.prompts.settle = "";
+      $("#set-prompts-settle").value = "";
+      api.toast("已恢复默认结算提示词（保存后生效）。");
     });
     $("#llm-key-clear").addEventListener("click", () => {
       api.storedLlmKey = ""; $("#set-llm-key").value = ""; $("#set-llm-key").placeholder = "sk-...";
@@ -253,19 +273,6 @@ Sophrosyne.Events = (function () {
       };
       reader.readAsText(f); e.target.value = "";
     });
-
-    $("#llm-ask").addEventListener("click", async () => {
-      const btn = $("#llm-ask"); btn.disabled = true; btn.textContent = "史官拟诏中…";
-      try { const text = await LLM.ask(S(), $("#llm-task").value); $("#llm-result").textContent = text; $("#llm-result").hidden = false; $("#llm-actions").hidden = false; }
-      catch (err) { $("#llm-result").textContent = "出错：" + err.message; $("#llm-result").hidden = false; $("#llm-actions").hidden = false; }
-      finally { btn.disabled = false; btn.textContent = "召唤史官"; }
-    });
-    $("#llm-append").addEventListener("click", () => {
-      const text = $("#llm-result").textContent;
-      if (text && !text.startsWith("出错")) { Engine.log(S(), "【史官】" + text); Store.save(S()); api.renderAll(); api.toast("已采纳入起居注。"); }
-      $("#llm-modal").hidden = true;
-    });
-    $("#llm-close").addEventListener("click", () => $("#llm-modal").hidden = true);
 
     $("#setup-save").addEventListener("click", () => {
       if ($("#setup-dynasty").value.trim()) S().dynasty.name = $("#setup-dynasty").value.trim();

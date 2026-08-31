@@ -73,55 +73,52 @@ Sophrosyne.UI = (function () {
     qintianjian:  { name: "钦天监", sub: "内廷 · 历法祭祀" },
     changyinge:   { name: "畅音阁", sub: "内廷 · 宴乐" },
     yuhuayuan:    { name: "御花园", sub: "颐养 · 风雅" },
+    zhonghedian:  { name: "中和殿", sub: "外朝 · 礼仪" },
+    jiaotaidian:  { name: "交泰殿", sub: "内廷 · 宫规" },
+    wumen:        { name: "午门", sub: "外朝 · 颁诏" },
+    shenwumen:    { name: "神武门", sub: "北门 · 巡阅" },
+    cininggong:   { name: "慈宁宫", sub: "内廷 · 奉养" },
+    ningshougong: { name: "宁寿宫", sub: "内廷 · 颐养" },
   };
   const VENUE_ACTIONS = {
-    qianqinggong: [ { label: "报备突发事件", act: "event" }, { label: "立大志", act: "goal" } ],
+    qianqinggong: [ { label: "报备突发事件", act: "event" }, { label: "定国策", act: "goal" } ],
     junjichu:     [ { label: "颁行制度", act: "policy-add" } ],
-    wenyuange:    [ { label: "史官 AI", act: "llm" } ],
-    qintianjian:  [ { label: "岁末结算", act: "settle" } ],
+    kunninggong:  [ { label: "岁末结算", act: "settle" } ],
   };
-  // 二级详情面板（默认收起）：每个场馆的信息按钮 → 展开对应面板
+  // 二级详情面板（默认收起）：只保留真正有二级内容的宫殿
   const VENUE_INFO = {
-    taihemen:     [ { label: "本殿事务", targets: ["[data-venue-info=taihemen]"] } ],
-    taihedian:    [ { label: "勤政纪录", targets: ["#chain-main", "#chain-reserve"] } ],
-    baohe:        [ { label: "本殿事务", targets: ["[data-venue-info=baohe]"] } ],
+    taihedian:    [ { label: "勤政纪录", targets: ["#chain-main", "#chain-reserve", "#chain-oath"] } ],
     qianqinggong: [
       { label: "今日国是", targets: ["#court-today"] },
       { label: "国力各项", targets: ["#court-metrics"] },
       { label: "突发事件", targets: ["#event-status"] },
-      { label: "大目标", targets: ["#goal-list"] },
+      { label: "国策", targets: ["#goal-list"] },
       { label: "近闻", targets: ["#court-log"] },
     ],
     junjichu:     [ { label: "典章制度树", targets: ["#policy-tree"] } ],
-    wenhuadian:   [ { label: "本殿事务", targets: ["[data-venue-info=wenhuadian]"] } ],
     wuyingdian:   [ { label: "军备", targets: ["#wuying-metrics"] } ],
     wenyuange:    [ { label: "起居注", targets: ["#full-log"] } ],
     yangxindian:  [ { label: "圣躬属性", targets: ["#court-attrs"] } ],
-    kunninggong:  [ { label: "本殿事务", targets: ["[data-venue-info=kunninggong]"] } ],
-    neiweufu:     [ { label: "本殿事务", targets: ["[data-venue-info=neiweufu]"] } ],
-    yushanfang:   [ { label: "本殿事务", targets: ["[data-venue-info=yushanfang]"] } ],
     shangshufang: [ { label: "子嗣", targets: ["#heir-list"] } ],
-    qintianjian:  [ { label: "岁末结算", targets: ["#settle-hint"] } ],
-    changyinge:   [ { label: "本殿事务", targets: ["[data-venue-info=changyinge]"] } ],
-    yuhuayuan:    [ { label: "本殿事务", targets: ["[data-venue-info=yuhuayuan]"] } ],
+    kunninggong:  [ { label: "岁末结算", targets: ["#settle-hint"] } ],
   };
 
   // 宫殿交互点（x/y=中心, s=热点边长, l=标签, v=点击进入的视图）——按精确紫禁城平面图对位
   const PALACE = [
     // 中轴（北→南）
-    { x: 320, y: 81, s: 70, l: "神武门" },
+    { x: 320, y: 81, s: 70, l: "神武门", v: "shenwumen" },
     { x: 320, y: 198, s: 56, l: "御花园", v: "yuhuayuan" },
     { x: 320, y: 310, s: 51, l: "坤宁宫", v: "kunninggong" },
-    { x: 320, y: 384, s: 62, l: "交泰殿" },
+    { x: 320, y: 384, s: 62, l: "交泰殿", v: "jiaotaidian" },
     { x: 320, y: 471, s: 62, l: "乾清宫", v: "court" },
     { x: 320, y: 546, s: 66, l: "乾清门" },
     { x: 320, y: 632, s: 54, l: "保和殿", v: "baohe" },
-    { x: 320, y: 707, s: 62, l: "中和殿" },
+    { x: 320, y: 707, s: 62, l: "中和殿", v: "zhonghedian" },
     { x: 320, y: 806, s: 72, l: "太和殿", v: "focus" },
     { x: 320, y: 967, s: 53, l: "太和门", v: "taihemen" },
-    { x: 320, y: 1141, s: 80, l: "午门" },
+    { x: 320, y: 1141, s: 80, l: "午门", v: "wumen" },
     // 西侧（内廷·西六宫贴坤宁宫两翼/养心殿/军机处/隆宗门；外朝·武英殿/弘义阁；服务·御膳房/内务府）
-    { x: 105, y: 190, s: 64, l: "慈宁宫" },
+    { x: 105, y: 190, s: 64, l: "慈宁宫", v: "cininggong" },
     { x: 185, y: 240, s: 42, l: "永寿宫" },
     { x: 228, y: 240, s: 42, l: "翊坤宫" },
     { x: 185, y: 314, s: 42, l: "储秀宫" },
@@ -137,7 +134,7 @@ Sophrosyne.UI = (function () {
     { x: 120, y: 560, s: 37, l: "内务府", v: "neiweufu" },
     { x: 42, y: 706, s: 38, l: "西华门" },
     // 东侧（内廷·东六宫贴坤宁宫两翼/奉先殿/上书房/景运门/宁寿宫/畅音阁/钦天监；外朝·文华殿/文渊阁/体仁阁）
-    { x: 535, y: 190, s: 70, l: "宁寿宫" },
+    { x: 535, y: 190, s: 70, l: "宁寿宫", v: "ningshougong" },
     { x: 412, y: 240, s: 42, l: "景仁宫" },
     { x: 455, y: 240, s: 42, l: "承乾宫" },
     { x: 412, y: 314, s: 42, l: "钟粹宫" },
@@ -157,6 +154,7 @@ Sophrosyne.UI = (function () {
 
   function init(s, opts) {
     state = s;
+    state.settings.devMode = !!DEV;   // 开发模式来源（URL ?dev / localStorage）同步给引擎
     renderVenueHeros();
     Sophrosyne.Events.bind(api);
     renderPalace();
@@ -189,13 +187,14 @@ Sophrosyne.UI = (function () {
     for (const b of PALACE) {
       const cx = b.x - b.s / 2, cy = b.y - b.s / 2;
       const tx = b.x, ty = b.y + b.s / 2 + 14;
+      const lbl = b.l + (DEV ? " (" + b.x + "," + b.y + ")" : "");
       if (b.v) {
         html += '<g class="bldg" data-building="' + b.v + '">' +
           '<rect class="hotspot" x="' + cx + '" y="' + cy + '" width="' + b.s + '" height="' + b.s + '" rx="7"/>' +
-          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#f6df9b" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke" pointer-events="none">' + b.l + '</text></g>';
+          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#f6df9b" font-size="12" stroke="#1d1510" stroke-width="3" paint-order="stroke" pointer-events="none">' + lbl + '</text></g>';
       } else {
         html += '<g class="bldg-deco">' +
-          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#c9a227" font-size="11" stroke="#1d1510" stroke-width="3" paint-order="stroke" opacity="0.85">' + b.l + '</text></g>';
+          '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" fill="#c9a227" font-size="11" stroke="#1d1510" stroke-width="3" paint-order="stroke" opacity="0.85">' + lbl + '</text></g>';
       }
     }
     svg.insertAdjacentHTML("beforeend", html);
@@ -260,7 +259,6 @@ Sophrosyne.UI = (function () {
     renderChain();            // 太和殿：主要/次要政务链
     renderPolicy();           // 军机处：典章制度
     renderRecord();           // 文渊阁：起居注
-    Object.keys(VENUES).forEach(renderVenueInfo);  // 各殿「本殿事务」说明
     renderHistory();          // 奉先殿：实录
     renderConsole();          // 地图底部控制台
   }
@@ -281,6 +279,9 @@ Sophrosyne.UI = (function () {
       }
       row.dataset.nav = "";
       fa.hidden = false; aa.hidden = true;
+      // 勤政不可提前结束：只有到时（待确认）才显示「功成记录」，否则仅可「失守廷议」
+      const fc = $("#focus-complete");
+      if (fc) fc.style.display = (af.status === "awaiting-confirmation") ? "" : "none";
       if (af.status !== "awaiting-confirmation") updateStatusTimer();
     } else if (ap) {
       dot.className = "status-dot appoint";
@@ -308,10 +309,8 @@ Sophrosyne.UI = (function () {
   function renderHeader() {
     $("#dynasty-name").textContent = state.dynasty.name || "未定";
     $("#era-name").textContent = state.reign.eraName + " · 在位第 " + Engine.reignYears(state) + " 年 · 春秋 " + state.reign.age + " 岁";
-    $("#stat-treasury").textContent = fmtNum(state.reign.metrics.treasury);
-    $("#stat-support").textContent = Math.round(state.reign.metrics.support);
-    $("#stat-prestige").textContent = state.reign.attributes.prestige;
     $("#stat-main").textContent = state.chains.main.records.length;
+    $("#stat-oath").textContent = Engine.countOath(state);
   }
 
   function renderCourt() {
@@ -354,17 +353,6 @@ Sophrosyne.UI = (function () {
     const keys = ["army", "training", "equipment"];
     el.innerHTML = keys.map(k => { const m = all[k]; return '<div class="metric-row"><span class="m-name">' + m.name + '</span><span class="m-val">' + fmtNum(m.value) + (m.unit ? " " + m.unit : "") + '</span></div>'; }).join("");
   }
-  function renderVenueInfo(key) {
-    const el = document.querySelector('[data-venue-info="' + key + '"]');
-    if (!el) return;
-    const scenes = Scenes.byVenue(key);
-    el.innerHTML = scenes.map(c =>
-      '<div class="scene-desc"><b>' + escapeHtml(c.name) + '</b>' +
-      '<div class="hint">' + escapeHtml(c.gov) + '</div>' +
-      '<div class="hint">预约：' + escapeHtml(c.appointment) + '</div>' +
-      '<div class="hint">' + escapeHtml(Engine.describeEffects(c.defaultEffects) || "无默认增减") + '</div></div>'
-    ).join("") || '<p class="hint">本殿无事务。</p>';
-  }
   function renderAttrs(el) {
     if (!el) return;
     el.innerHTML = Scenes.ATTR_KEYS.map(k => '<div class="metric-row"><span class="m-name">' + Scenes.ATTR_NAMES[k] + '</span><span class="m-val">' + state.reign.attributes[k] + '</span></div>').join("");
@@ -382,19 +370,20 @@ Sophrosyne.UI = (function () {
   }
   function renderGoals() {
     const el = $("#goal-list");
-    if (!state.goals.length) { el.innerHTML = '<p class="hint">尚无大志。</p>'; return; }
+    if (!state.goals.length) { el.innerHTML = '<p class="hint">尚无国策。</p>'; return; }
     el.innerHTML = state.goals.map(g => {
       const subs = (g.subGoals || []).map(sg => {
         const crits = (sg.criteria || []).map(c => {
           const ok = Engine.criterionMet(state, c);
           return '<div class="subgoal-crit' + (ok ? " ok" : "") + '">' + (ok ? "✓" : "·") + ' ' + escapeHtml(Engine.describeCriterion(state, c)) + '</div>';
         }).join("");
-        return '<div class="subgoal' + (sg.done ? " done" : "") + '"><b>' + (sg.done ? "✓" : "·") + ' ' + escapeHtml(sg.name) + '</b>' + crits + '</div>';
+        return '<div class="subgoal' + (sg.done ? " done" : "") + '"><b>' + (sg.done ? "✓" : "·") + ' ' + escapeHtml(sg.name) + '</b>' + (sg.verdict ? '<div class="hint">' + escapeHtml(sg.verdict) + '</div>' : '') + crits + '</div>';
       }).join("");
-      const txt = g.status === "done" ? "已击退" : (g.status === "failed" ? "已兵败" : "进行中");
-      return '<div class="goal-row ' + escapeHtml(g.status) + '"><div class="goal-name"><b>' + escapeHtml(g.name) + '</b>' + (g.flavor ? ' <span class="hint">' + escapeHtml(g.flavor) + '</span>' : '') + subs + '</div>' +
+      const title = g.title || g.name;
+      const txt = g.status === "done" ? "已成" : (g.status === "failed" ? "未竟" : "进行中");
+      return '<div class="goal-row ' + escapeHtml(g.status) + '"><div class="goal-name"><b>' + escapeHtml(title) + '</b>' + (g.title && g.title !== g.name ? ' <span class="hint">（' + escapeHtml(g.name) + '）</span>' : '') + (g.verdict ? '<div class="hint">' + escapeHtml(g.verdict) + '</div>' : '') + subs + '</div>' +
         '<span class="goal-status">' + txt + '</span>' +
-        (g.status === "active" ? '<span class="goal-actions"><button data-gact="sub" data-id="' + escapeHtml(g.id) + '">加阶段目标</button><button data-gact="done" data-id="' + escapeHtml(g.id) + '">大捷</button><button data-gact="failed" data-id="' + escapeHtml(g.id) + '">兵败</button></span>' : '') +
+        (g.status === "active" ? '<span class="goal-actions"><button data-gact="sub" data-id="' + escapeHtml(g.id) + '">加阶段目标</button><button data-gact="done" data-id="' + escapeHtml(g.id) + '">已成</button><button data-gact="failed" data-id="' + escapeHtml(g.id) + '">未竟</button></span>' : '') +
         '</div>';
     }).join("");
   }
@@ -402,8 +391,22 @@ Sophrosyne.UI = (function () {
   function renderChain() {
     renderChainList($("#chain-main"), state.chains.main, "主要政务");
     renderChainList($("#chain-reserve"), state.chains.reserve, "次要政务");
+    renderOathChain($("#chain-oath"), state.chains.oath);
     $("#chain-main-precedents").innerHTML = renderPrecedents(state.chains.main.precedents, "主要政务成例");
     $("#chain-reserve-precedents").innerHTML = renderPrecedents(state.chains.reserve.precedents, "次要政务成例");
+    const op = $("#chain-oath-precedents");
+    if (op) op.innerHTML = renderPrecedents((state.chains.oath && state.chains.oath.precedents) || [], "金口玉言成例");
+  }
+  function renderOathChain(el, chain) {
+    if (!el) return;
+    const recs = (chain && chain.records) || [];
+    if (!recs.length) { el.innerHTML = '<p class="hint">尚无承诺（预约）纪录。</p>'; return; }
+    let html = '<div class="chain-title">金口玉言 · 共 ' + recs.length + ' 诺</div>';
+    for (let i = recs.length - 1; i >= 0; i--) {
+      const r = recs[i];
+      html += '<div class="chain-row"><span class="num">#' + r.number + '</span><span class="gov">' + escapeHtml(r.name) + (r.appointment ? ' · ' + escapeHtml(r.appointment) : '') + '</span><span class="tag' + (r.status === "kept" ? "" : "") + '">' + (r.status === "kept" ? "已履约" : "待履约") + '</span><span class="date">' + escapeHtml(r.date) + '</span></div>';
+    }
+    el.innerHTML = html;
   }
   function renderChainList(el, chain, title) {
     if (!el) return;
@@ -456,9 +459,13 @@ Sophrosyne.UI = (function () {
     $("#settle-hint").textContent = "今日已记 " + state.reign.todayTasks.length + " 件事务。";
     $("#full-log").innerHTML = renderLog(state.log);
   }
+  function logItemHtml(e) {
+    const modern = e.modern ? '<div class="log-modern">' + escapeHtml(e.modern) + '</div>' : '';
+    return '<li><span class="k">' + (e.year ? "第" + e.year + "年 " : "") + e.date + '</span><span class="v">' + escapeHtml(e.text) + modern + '</span></li>';
+  }
   function renderLog(entries) {
     if (!entries.length) return '<p class="hint">起居注尚空。</p>';
-    return entries.map(e => '<li><span class="k">' + (e.year ? "第" + e.year + "年 " : "") + e.date + '</span><span class="v">' + escapeHtml(e.text) + '</span></li>').join("");
+    return entries.map(logItemHtml).join("");
   }
   function renderHistory() {
     $("#abdicate-banner").hidden = !Engine.shouldAbdicate(state);
@@ -468,7 +475,7 @@ Sophrosyne.UI = (function () {
     el.innerHTML = lineage.slice().reverse().map(l => {
       const title = "「" + escapeHtml(l.eraName) + "」" + (l.posthumous ? " · 谥「" + escapeHtml(l.posthumous) + "」" : "") + (l.temple ? " · 庙号「" + escapeHtml(l.temple) + "」" : "");
       const recs = (l.veritableRecords || []);
-      const recHtml = recs.map(r => '<li><span class="k">' + escapeHtml(r.date) + '</span><span class="v">' + escapeHtml(r.text) + '</span></li>').join("");
+      const recHtml = recs.map(r => logItemHtml(r)).join("");
       return '<div class="emperor"><div class="emperor-title">' + title + '</div>' +
         '<div class="emperor-meta">在位 ' + l.years + ' 年 · 享年 ' + l.age + ' 岁 · ' + escapeHtml(l.reason) + '</div>' +
         (l.score && l.score.reason ? '<div class="emperor-basis">谥号依据：' + escapeHtml(l.score.reason) + '</div>' : '') +
@@ -573,7 +580,6 @@ Sophrosyne.UI = (function () {
       $("#policy-modal").hidden = false;
     }
     else if (act === "settle") { openSettle(); }
-    else if (act === "llm") { openLlm(); }
     else if (act === "abdicate") { openAbdicate(); }
   }
   function renderEventPolicies() {
@@ -647,15 +653,18 @@ Sophrosyne.UI = (function () {
         '<input class="se-title" value="' + escapeHtml(e.title || "") + '" placeholder="标题">' +
         '<input class="se-note" value="' + escapeHtml(e.note || "") + '" placeholder="评语">' +
         '<input class="se-effects" value="' + escapeHtml(effectsToText(e.effects)) + '" placeholder="指标:数值（如 treasury:1000,support:2）">' +
+        (e.classical ? '<div class="se-preview">' + escapeHtml(e.classical) + '</div>' : '') +
+        (e.modern ? '<div class="se-preview log-modern">' + escapeHtml(e.modern) + '</div>' : '') +
+        '<input type="hidden" class="se-classical" value="' + escapeHtml(e.classical || "") + '">' +
+        '<input type="hidden" class="se-modern" value="' + escapeHtml(e.modern || "") + '">' +
       '</div>'
     ).join("") || '<p class="hint">（今日无待结算事务）</p>';
-  }
-  function openLlm() {
-    $("#llm-result").hidden = true; $("#llm-result").textContent = ""; $("#llm-actions").hidden = true; $("#llm-modal").hidden = false;
   }
   function openAbdicate() {
     const sel = $("#abdicate-heir");
     sel.innerHTML = '<option value="">（无子嗣，宗室即位）</option>' + state.heirs.map(h => '<option value="' + escapeHtml(h.id) + '">' + escapeHtml(h.name) + '（' + h.age + ' 岁）</option>').join("");
+    const era = $("#abdicate-era");
+    if (era) era.value = "";
     $("#abdicate-modal").hidden = false;
   }
 

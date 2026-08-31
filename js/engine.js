@@ -17,9 +17,23 @@ Sophrosyne.Engine = (function () {
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  function log(state, text) {
-    state.log.unshift({ date: todayStr(), time: new Date().toTimeString().slice(0, 5), year: reignYears(state), text });
+  function log(state, text, opts) {
+    const entry = { date: todayStr(), time: new Date().toTimeString().slice(0, 5), year: reignYears(state), text };
+    if (opts && opts.pending) entry.pending = true;
+    if (opts && opts.classical != null) entry.classical = opts.classical;
+    if (opts && opts.modern != null) entry.modern = opts.modern;
+    state.log.unshift(entry);
     if (state.log.length > 500) state.log.length = 500;
+  }
+  // 风味化起居录条目：text=classical（古代记录体），modern=白话翻译
+  function logFlavored(state, classical, modern) {
+    log(state, classical || "政务", { classical: classical, modern: modern });
+  }
+  // 压缩起居录/实录为有界摘要，供下一次 LLM 提示词（确定性本地压缩，不额外消耗 token）
+  function compressRecords(entries, n, maxChars) {
+    const list = (entries || []).slice(-(n || 8));
+    const text = list.map(e => (e.classical || e.text || "")).filter(Boolean).join("；");
+    return text.length > (maxChars || 600) ? text.slice(0, maxChars || 600) : text;
   }
 
   function reignYears(state) {
@@ -79,14 +93,18 @@ Sophrosyne.Engine = (function () {
 
   function fallbackSettle(state) {
     let loveCount = 0;
+    state.log = state.log.filter(e => !e.pending);
     for (const t of state.reign.todayTasks) {
       const sc = Scenes.get(t.sceneId);
       if (!sc) continue;
       if (sc.id === "love") loveCount++;
       const eff = scaleEffects(sc.defaultEffects, efficiency(state, sc.primary));
       Metrics.applyEffects(state.reign.metrics, eff);
-      log(state, "「" + sc.gov + "」" + (t.realTask ? "——" + t.realTask : "") + "。（" + describeEffects(eff) + "）");
+      const classical = "帝" + sc.gov + (t.realTask ? "，专务「" + t.realTask + "」" : "") + "。（" + describeEffects(eff) + "）";
+      const modern = "完成" + sc.name + (t.realTask ? "（" + t.realTask + "）" : "") + "，国力影响：" + describeEffects(eff) + "。";
+      logFlavored(state, classical, modern);
     }
+    state.reign.digest = compressRecords(state.log, 8, 600);
     checkHeirBirth(state, loveCount);
   }
   function applySettlement(state, entries) {
@@ -94,10 +112,12 @@ Sophrosyne.Engine = (function () {
     for (const t of state.reign.todayTasks) if (t.sceneId === "love") loveCount++;
     // 与兜底路径一致：结算同样受威望加成（LLM 结算无主属性，仅取威望项）
     const factor = efficiency(state, null);
+    state.log = state.log.filter(e => !e.pending);
     for (const e of entries) {
       if (e.effects) Metrics.applyEffects(state.reign.metrics, scaleEffects(e.effects, factor));
-      log(state, (e.title || "政务") + (e.note ? "：" + e.note : ""));
+      logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "");
     }
+    state.reign.digest = compressRecords(state.log, 8, 600);
     checkHeirBirth(state, loveCount);
   }
 
@@ -160,16 +180,24 @@ Sophrosyne.Engine = (function () {
     const entries = tasks.map(t => {
       const sc = Scenes.get(t.sceneId);
       if (!sc) return null;
-      return { title: sc.gov + (t.realTask ? "——" + t.realTask : ""), effects: scaleEffects(sc.defaultEffects, efficiency(state, sc.primary)), note: "" };
+      const eff = scaleEffects(sc.defaultEffects, efficiency(state, sc.primary));
+      return {
+        title: sc.gov + (t.realTask ? "——" + t.realTask : ""),
+        effects: eff,
+        note: "",
+        classical: "帝" + sc.gov + (t.realTask ? "，专务「" + t.realTask + "」" : "") + "。（" + describeEffects(eff) + "）",
+        modern: "完成" + sc.name + (t.realTask ? "（" + t.realTask + "）" : "") + "，国力影响：" + describeEffects(eff) + "。"
+      };
     }).filter(Boolean);
-    return { draft: { title: "", note: "", entries }, source: "fallback" };
+    return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalVerdicts: [] }, source: "fallback" };
   }
-  // 确认后写入存档：逐项封顶 + 应用国力，清空今日事务
+  // 确认后写入存档：移除待结算占位、逐项封顶 + 应用国力 + 双语起居录 + 国策风味名/评述 + 压缩摘要
   function applySettlementDraft(state, draft) {
     const entries = (draft && draft.entries) || [];
     const factor = efficiency(state, null);
     let loveCount = 0;
     for (const t of state.reign.todayTasks) if (t.sceneId === "love") loveCount++;
+    state.log = state.log.filter(e => !e.pending);
     for (const e of entries) {
       if (!e || typeof e !== "object") continue;
       const capped = {};
@@ -183,10 +211,16 @@ Sophrosyne.Engine = (function () {
         }
       }
       if (Object.keys(capped).length) Metrics.applyEffects(state.reign.metrics, scaleEffects(capped, factor));
-      log(state, (e.title || "政务") + (e.note ? "：" + e.note : ""));
+      logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "");
     }
+    // 国策风味化名 + 大目标/阶段目标评述
+    const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgv = (draft && draft.subGoalVerdicts) || [];
+    for (const it of gt) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.title && !g.title) g.title = it.title; }
+    for (const it of gv) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.verdict) g.verdict = it.verdict; }
+    for (const it of sgv) { for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg && it.verdict) sg.verdict = it.verdict; } }
     checkHeirBirth(state, loveCount);
     state.reign.todayTasks = [];
+    state.reign.digest = compressRecords(state.log, 8, 600);
     Store.save(state);
     return { applied: entries.length };
   }
@@ -195,7 +229,7 @@ Sophrosyne.Engine = (function () {
     if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，请先功成或失守。" };
     const sc = Scenes.get(sceneId);
     if (!sc) return null;
-    const minutes = state.settings.focusMinutes || 60;
+    const minutes = (state.settings.devMode) ? 0 : (state.settings.focusMinutes || 60);
     const af = {
       sceneId, name: sc.name, gov: sc.gov, appointment: sc.appointment,
       attrs: sc.attrs, primary: sc.primary,
@@ -210,6 +244,12 @@ Sophrosyne.Engine = (function () {
   function completeFocus(state) {
     const af = state.activeFocus;
     if (!af) return null;
+    // 勤政开始后不可提前结束：未到时只能「失守廷议」；开发模式下可即时功成
+    const timedOut = af.status === "awaiting-confirmation" || (af.endsAt && Date.now() >= af.endsAt);
+    if (!timedOut && !state.settings.devMode) {
+      return { blocked: true, reason: "临朝未满，不可提前功成；若放弃请行失守廷议。" };
+    }
+    if (af.status !== "awaiting-confirmation") af.status = "awaiting-confirmation";
     const chain = state.chains[af.chain];
     const number = chain.records.length + 1;
     for (const a of (af.attrs || [])) {
@@ -218,7 +258,7 @@ Sophrosyne.Engine = (function () {
     chain.records.push({ number, sceneId: af.sceneId, name: af.name, gov: af.gov, realTask: af.realTask, date: todayStr(), ts: Date.now() });
     state.reign.todayTasks.push({ sceneId: af.sceneId, realTask: af.realTask, chain: af.chain, ts: Date.now() });
     state.activeFocus = null;
-    log(state, "功成：" + chainLabel(af.chain) + " #" + number + "「" + af.gov + "」" + (af.realTask ? "——" + af.realTask : "") + "（待岁末结算）");
+    log(state, "功成：" + chainLabel(af.chain) + " #" + number + "「" + af.gov + "」" + (af.realTask ? "——" + af.realTask : "") + "（待岁末结算）", { pending: true });
     evaluateSubGoals(state);
     Store.save(state);
     return { number, chain: af.chain };
@@ -264,6 +304,9 @@ Sophrosyne.Engine = (function () {
     const ap = { sceneId, name: sc.name, appointment: sc.appointment, scheduledAt: Date.now(), dueAt: Date.now() + APPOINTMENT_MIN * 60000, status: "pending" };
     state.activeAppointment = ap;
     state.chains.appointment.active = ap;
+    // 金口玉言：每次预约 +1（承诺入链）；失信则整链清零
+    const oath = state.chains.oath || (state.chains.oath = { kind: "oath", records: [], precedents: [] });
+    oath.records.push({ number: oath.records.length + 1, sceneId, name: sc.name, appointment: sc.appointment, date: todayStr(), ts: Date.now(), status: "pending" });
     log(state, "预约（" + sc.appointment + "）：「" + sc.name + "」，一刻钟内须临朝。");
     Store.save(state);
     return ap;
@@ -279,6 +322,8 @@ Sophrosyne.Engine = (function () {
     if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，预约暂不能履约。" };
     state.reign.attributes.prestige = Math.min(100, state.reign.attributes.prestige + 1);
     state.chains.appointment.history.push({ sceneId: ap.sceneId, fulfilled: true, date: todayStr() });
+    const oath = state.chains.oath;
+    if (oath) { for (let i = oath.records.length - 1; i >= 0; i--) { if (oath.records[i].status === "pending") { oath.records[i].status = "kept"; break; } } }
     state.activeAppointment = null; state.chains.appointment.active = null;
     log(state, "守信履约，威望 +1（现 " + state.reign.attributes.prestige + "）。");
     Store.save(state);
@@ -298,10 +343,13 @@ Sophrosyne.Engine = (function () {
     state.reign.attributes.prestige = Math.max(0, state.reign.attributes.prestige - 1);
     state.chains.appointment.history.push({ sceneId: ap.sceneId, fulfilled: false, date: todayStr() });
     state.activeAppointment = null; state.chains.appointment.active = null;
+    if (state.chains.oath) { state.chains.oath.records = []; log(state, "金口玉言尽废：预约链清零。"); }
     log(state, "失信失约，威望 -1（现 " + state.reign.attributes.prestige + "）。");
     Store.save(state);
     return { missed: true };
   }
+  function countOath(state) { return (state.chains.oath && state.chains.oath.records) ? state.chains.oath.records.length : 0; }
+
   // 状态收敛：由 UI 每秒调用；仅做"到时→待确认/逾期"的必要转换，不含业务规则。
   function advanceTimers(state) {
     let changed = false;
@@ -339,7 +387,7 @@ Sophrosyne.Engine = (function () {
     return { ok: true };
   }
 
-  function policyAddAllowed(state) { return state.meta.lastPolicyAddDate !== todayStr(); }
+  function policyAddAllowed(state) { return !!(state.settings && state.settings.devMode) || state.meta.lastPolicyAddDate !== todayStr(); }
   function addPolicy(state, data) {
     if (!policyAddAllowed(state)) return { ok: false, reason: "今日已颁行过制度，明日再议。" };
     const p = {
@@ -434,9 +482,9 @@ Sophrosyne.Engine = (function () {
   }
 
   function addGoal(state, { name, flavor }) {
-    const g = { id: uid(), name, flavor: flavor || "", status: "active", createdAt: todayStr(), resolvedAt: null, subGoals: [] };
+    const g = { id: uid(), name, flavor: flavor || "", title: flavor || "", verdict: "", status: "active", createdAt: todayStr(), resolvedAt: null, subGoals: [] };
     state.goals.push(g);
-    log(state, "定国策大志（敌人）：「" + name + "」" + (flavor ? "（" + flavor + "）" : "") + "。");
+    log(state, "定国策：「" + name + "」" + (flavor ? "（" + flavor + "）" : "") + "。");
     Store.save(state);
     return { ok: true, goal: g };
   }
@@ -496,7 +544,7 @@ Sophrosyne.Engine = (function () {
     if (!g) return;
     g.status = status === "done" ? "done" : "failed";
     g.resolvedAt = todayStr();
-    log(state, (g.status === "done" ? "大捷：击退敌人——" : "兵败：未竟全功——") + "「" + g.name + "」。");
+    log(state, (g.status === "done" ? "国策已成——" : "国策未竟——") + "「" + (g.title || g.name) + "」。");
     Store.save(state);
   }
   function countSubGoalsDone(goals) {
@@ -514,6 +562,10 @@ Sophrosyne.Engine = (function () {
     const isFirst = state.dynasty.lineage.length === 0;
     const goalsThisReign = state.goals.filter(g => g.status !== "active" && g.resolvedAt && g.resolvedAt >= state.reign.startDate);
     const subGoalDone = countSubGoalsDone(goalsThisReign);
+    const veritable = state.log.slice();
+    const prevRecord = compressRecords(veritable, 12, 900);
+    const deltas = Metrics.deltas(state.reign.baseline, state.reign.metrics);
+    const goalsSummary = goalsThisReign.map(g => (g.title || g.name) + "（" + (g.status === "done" ? "成" : "败") + "）").join("；") || "无";
 
     const score = Sophrosyne.Score.scoreReign({
       baseline: state.reign.baseline, metrics: state.reign.metrics,
@@ -524,7 +576,8 @@ Sophrosyne.Engine = (function () {
     let llmEulogy = "";
     if (opts.mode === "llm") {
       try {
-        const lr = await Sophrosyne.LLM.posthumous(state, goalsThisReign, subGoalDone);
+        // 议定先帝：实录摘要 + 国力变动 + 属性 + 国策实现，叙事性评定（不重复规则数字）
+        const lr = await Sophrosyne.LLM.posthumous(state, prevRecord, deltas, goalsSummary, subGoalDone);
         if (lr && lr.posthumous) score.posthumous = lr.posthumous;
         if (lr && lr.temple) score.temple = lr.temple;
         llmEulogy = (lr && lr.eulogy) || "";
@@ -532,13 +585,13 @@ Sophrosyne.Engine = (function () {
     }
 
     log(state, (reason || "驾崩") + "。在位 " + y + " 年，享年 " + state.reign.age + " 岁。" + score.reason + (llmEulogy ? " 史官曰：" + llmEulogy : ""));
-    const veritable = state.log.slice();
     state.dynasty.lineage.push({
       eraName: state.reign.eraName, years: y, age: state.reign.age,
       metrics: Object.assign({}, state.reign.metrics), chainLen: state.chains.main.records.length,
-      goals: goalsThisReign.map(g => ({ name: g.name, status: g.status })), subGoalDone,
+      goals: goalsThisReign.map(g => ({ name: g.name, title: g.title, status: g.status })), subGoalDone,
       date: todayStr(), reason: reason || "驾崩",
       posthumous: score.posthumous, temple: score.temple, score, eulogy: llmEulogy,
+      digest: compressRecords(veritable, 12, 600),
       veritableRecords: veritable,
     });
 
@@ -555,7 +608,7 @@ Sophrosyne.Engine = (function () {
       catch (e) { /* 用默认 */ }
     }
 
-    const next = ERA_NAMES[state.dynasty.lineage.length % ERA_NAMES.length];
+    const next = (opts.eraName && opts.eraName.trim()) ? opts.eraName.trim() : ERA_NAMES[state.dynasty.lineage.length % ERA_NAMES.length];
     state.reign.eraName = next;
     state.reign.startDate = todayStr();
     state.reign.age = newAge;
@@ -566,8 +619,10 @@ Sophrosyne.Engine = (function () {
     state.reign.baseline = Metrics.initialMetrics();
     state.reign.eventMode = null;
     state.reign.todayTasks = [];
+    state.reign.digest = "";
     state.chains.main = Store.newChain("main");
     state.chains.reserve = Store.newChain("reserve");
+    state.chains.oath = Store.newChain("oath");
     state.chains.appointment = { active: null, history: [] };
     state.activeFocus = null;
     state.activeAppointment = null;
@@ -586,11 +641,11 @@ Sophrosyne.Engine = (function () {
     init, tick, reignYears, shouldAbdicate, computeLifeSpan, ensureLifeSpan,
     efficiency, scaleEffects, describeEffects, chainLabel,
     startFocus, expireFocus, completeFocus, abandonFocus, verdict,
-    scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, advanceTimers,
+    scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, countOath, advanceTimers,
     settleYear, proposeSettlement, applySettlementDraft, fallbackSettle, applySettlement, yearlyAdvance,
     addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy,
     adjudicateEvent, checkHeirBirth, createHeir, trainHeir,
     addGoal, addSubGoal, resolveGoal, evaluateSubGoals, criterionMet, describeCriterion, countSubGoalsDone,
-    abdicate, log, todayStr, daysBetween, ERA_NAMES
+    abdicate, log, logFlavored, compressRecords, todayStr, daysBetween, ERA_NAMES
   };
 })();

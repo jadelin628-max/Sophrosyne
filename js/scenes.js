@@ -33,6 +33,19 @@ Sophrosyne.Scenes = (function () {
     { id: "love",       domain: "内廷", loc: "kunninggong",  name: "琴瑟和鸣", gov: "陪伴、约会、经营感情", appointment: "更衣理容", defaultEffects: { support: 2 }, attrs: ["charm", "composure"], primary: "charm" },
     { id: "diet",       domain: "内廷", loc: "yushanfang",  name: "药膳调理", gov: "饮食、药膳、养生", appointment: "传膳备药", defaultEffects: { population: 200, support: 1 }, attrs: ["health", "energy"], primary: "health" },
     { id: "tea",        domain: "内廷", loc: "yuhuayuan",  name: "焚香品茗", gov: "休息、品茗、放松", appointment: "备茶焚香", defaultEffects: { support: 1 }, attrs: ["composure"], primary: "composure" },
+
+    // —— 0.6.0 新开宫殿与既有宫殿补丰富 ——
+    { id: "ritual",     domain: "前朝", loc: "zhonghedian", name: "大朝仪礼", gov: "演礼、朝仪、典制", appointment: "设坛备仪", defaultEffects: { order: 1, prestige: 1 }, attrs: ["composure", "prestige"], primary: "composure" },
+    { id: "household",  domain: "内廷", loc: "jiaotaidian", name: "整饬宫规", gov: "整理、收纳、居所规整", appointment: "点检宫务", defaultEffects: { order: 1, corruption: -1 }, attrs: ["energy", "composure"], primary: "energy" },
+    { id: "proclaim",   domain: "前朝", loc: "wumen",      name: "颁诏天下", gov: "布告、宣示、公开承诺", appointment: "升座宣旨", defaultEffects: { prestige: 1, support: 1 }, attrs: ["intellect", "charm"], primary: "intellect" },
+    { id: "patrol",     domain: "内廷", loc: "shenwumen",  name: "巡城阅兵", gov: "散步、巡查、户外活动", appointment: "更衣出巡", defaultEffects: { training: 1, army: 50 }, attrs: ["health", "energy"], primary: "energy" },
+    { id: "eldercare",  domain: "内廷", loc: "cininggong", name: "奉养太妃", gov: "探望长辈、陪伴家人", appointment: "请安问膳", defaultEffects: { support: 1 }, attrs: ["charm", "composure"], primary: "charm" },
+    { id: "retire",     domain: "内廷", loc: "ningshougong", name: "颐养天年", gov: "养生、规划、安享", appointment: "沐浴安神", defaultEffects: { population: 200 }, attrs: ["health", "composure"], primary: "health" },
+    { id: "stargaze",   domain: "内廷", loc: "qintianjian", name: "观星测候", gov: "观察、记录、规划", appointment: "备历登台", defaultEffects: { tech: 1 }, attrs: ["intellect", "talent"], primary: "intellect" },
+    { id: "stroll",     domain: "内廷", loc: "yuhuayuan",  name: "游园理政", gov: "散步、放空、沉思", appointment: "更衣游园", defaultEffects: { order: 1 }, attrs: ["composure"], primary: "composure" },
+    { id: "taste",      domain: "内廷", loc: "yushanfang", name: "亲尝百膳", gov: "备餐、饮食、觉察", appointment: "传膳试味", defaultEffects: { population: 100, support: 1 }, attrs: ["health"], primary: "health" },
+    { id: "thrift",     domain: "内廷", loc: "neiweufu",   name: "节流开源", gov: "理财、预算、记账", appointment: "核账清册", defaultEffects: { treasury: 200, corruption: -1 }, attrs: ["energy", "intellect"], primary: "intellect" },
+    { id: "teach",      domain: "内廷", loc: "shangshufang", name: "教习皇子", gov: "教养、辅导、答疑", appointment: "备书开讲", defaultEffects: { xiuCai: 10 }, attrs: ["intellect", "charm"], primary: "intellect" },
   ];
 
   function get(id) { return SCENES.find(s => s.id === id) || null; }

@@ -12,6 +12,7 @@ Sophrosyne.UI = (function () {
   let verdictTarget = null;
   let subGoalGoalId = null;
   let pendingSettlement = null;
+  let storedLlmKey = "";   // 打开设置时读取已存 Key，用于脱敏展示与「留空不覆盖」
   // 开发开关：URL 带 ?dev 或 localStorage sophrosyne.dev=1 时显示坐标网格/轴标
   const DEV = (function () {
     try { return location.search.includes("dev") || localStorage.getItem("sophrosyne.dev") === "1"; }
@@ -44,6 +45,14 @@ Sophrosyne.UI = (function () {
     { title: "军事", keys: ["army", "training", "equipment"] },
     { title: "社会与民心", keys: ["support", "order", "corruption", "prestige", "living", "unemployment"] },
     { title: "文教与科技", keys: ["xiuCai", "juRen", "jinShi", "cultureScore", "tech", "infra", "diplomacy"] },
+  ];
+  // 日常汇总态势：只露五类头面指标，20 项国力细节留在乾清宫「国力各项」
+  const SUMMARY = [
+    { title: "政务", items: [["order", "治安"], ["prestige", "皇威"]] },
+    { title: "民生", items: [["support", "民心"], ["living", "生活"]] },
+    { title: "军备", items: [["army", "军队"], ["training", "训练"]] },
+    { title: "文治", items: [["cultureScore", "文治"], ["tech", "科技"]] },
+    { title: "朝纲", items: [["treasury", "国库"], ["corruption", "腐败"]] },
   ];
 
   // 各殿宇（场馆）说明与一级动作按钮
@@ -476,6 +485,7 @@ Sophrosyne.UI = (function () {
     if (af) st.textContent = (af.status === "awaiting-confirmation" ? "临朝待确认" : "临朝中") + " · " + af.gov;
     else if (ap) st.textContent = (ap.status === "overdue" ? "预约逾期" : "预约中") + " · " + ap.name;
     else st.textContent = "今日无事";
+    renderConsoleSummary();
     pending.textContent = state.reign.todayTasks.length ? "待结算 " + state.reign.todayTasks.length + " 件" : "";
     const seen = new Set(); const rec = [];
     const all = state.chains.main.records.concat(state.chains.reserve.records).slice(-24).reverse();
@@ -483,6 +493,18 @@ Sophrosyne.UI = (function () {
     quick.innerHTML = rec.map(r =>
       '<button class="scene-btn console-scene" data-quick-scene="' + r.sceneId + '">' + escapeHtml(r.name) + '</button>'
     ).join("") || '<span class="hint">尚无临朝纪录。</span>';
+  }
+  function renderConsoleSummary() {
+    const el = $("#console-summary");
+    if (!el) return;
+    const all = metricDisplay();
+    el.innerHTML = SUMMARY.map(g => {
+      const rows = g.items.map(([k, label]) => {
+        const m = all[k]; if (!m) return "";
+        return '<div class="sum-row"><span class="sum-k">' + label + '</span><span class="sum-v">' + fmtNum(m.value) + (m.unit ? m.unit : "") + '</span></div>';
+      }).join("");
+      return '<div class="sum-tile"><div class="sum-title">' + g.title + '</div>' + rows + '</div>';
+    }).join("");
   }
 
   function updateTimers() {
@@ -550,7 +572,7 @@ Sophrosyne.UI = (function () {
       if (!Engine.policyAddAllowed(state)) { toast("今日已颁行过制度，明日再议。"); return; }
       $("#policy-modal").hidden = false;
     }
-    else if (act === "settle") { doSettle(btn); }
+    else if (act === "settle") { openSettle(); }
     else if (act === "llm") { openLlm(); }
     else if (act === "abdicate") { openAbdicate(); }
   }
@@ -566,21 +588,58 @@ Sophrosyne.UI = (function () {
       '<label class="ev-opt"><input type="radio" name="ev-' + p.id + '" value="precedent"> 立为成例</label></div>'
     ).join("");
   }
+  function llmConfigured() {
+    const llm = state.settings.llm || {};
+    return !!(llm.baseUrl && llm.apiKey && llm.model);
+  }
+  // 岁末结算入口：已配置 LLM 时先展示「外发摘要」确认，否则直接本地常例（不外发）
+  function openSettle() {
+    if (llmConfigured()) {
+      renderSendSummary();
+      $("#send-modal").hidden = false;
+    } else {
+      doSettle(null);
+    }
+  }
+  function renderSendSummary() {
+    const el = $("#send-summary");
+    if (!el) return;
+    const tasks = state.reign.todayTasks;
+    const taskHtml = tasks.length
+      ? tasks.map(t => { const sc = Scenes.get(t.sceneId); return '<li>' + escapeHtml((sc ? sc.name : t.sceneId) + (t.realTask ? "——" + t.realTask : "")) + '</li>'; }).join("")
+      : '<li>（今日尚无事务）</li>';
+    const act = state.policies.filter(p => p.status === "active");
+    const polHtml = act.length ? act.map(p => '<li>' + escapeHtml(p.name) + '（固化度 ' + p.solidity + '）</li>').join("") : '<li>（无在行制度）</li>';
+    const recent = state.log.slice(0, 15);
+    const logHtml = recent.length ? recent.map(e => '<li>' + escapeHtml(e.date + " " + e.text) + '</li>').join("") : '<li>（起居注尚空）</li>';
+    el.innerHTML =
+      '<div class="send-block"><b>今日事务（' + tasks.length + ' 件）</b><ul>' + taskHtml + '</ul></div>' +
+      '<div class="send-block"><b>在行制度（' + act.length + ' 条）</b><ul>' + polHtml + '</ul></div>' +
+      '<div class="send-block"><b>近闻起居注（最近 ' + recent.length + ' 条）</b><ul>' + logHtml + '</ul></div>';
+  }
   async function doSettle(btn) {
-    btn.disabled = true; const orig = btn.textContent; btn.textContent = "拟诏中…";
+    const orig = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = "拟诏中…"; }
+    else toast("无外发，按本地常例拟定草案。");
     try {
       const r = await Engine.proposeSettlement(state, true);
       pendingSettlement = r;
       renderSettleEntries(r);
       $("#settle-modal").hidden = false;
     } catch (e) { toast("结算出错：" + e.message); }
-    btn.disabled = false; btn.textContent = orig;
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
   function effectsToText(eff) {
     return Object.keys(eff || {}).map(k => k + ":" + eff[k]).join(",");
   }
+  function renderSettleLegend() {
+    const el = $("#settle-legend");
+    if (!el) return;
+    el.textContent = "可编辑指标：" + Metrics.STORED_KEYS.map(k => Metrics.DEFS[k].name + "=" + k).join("、");
+  }
   function renderSettleEntries(r) {
     $("#settle-source").textContent = r.source === "llm" ? "史官拟定的草案（可编辑后确认）" : "本地常例草案（可编辑后确认）";
+    renderSettleLegend();
     const el = $("#settle-entries");
     const entries = (r.draft && r.draft.entries) || [];
     el.innerHTML = entries.map((e, i) =>
@@ -711,6 +770,11 @@ Sophrosyne.UI = (function () {
       const r = await Engine.proposeSettlement(state, false);
       pendingSettlement = r; renderSettleEntries(r);
     });
+    $("#send-cancel").addEventListener("click", () => $("#send-modal").hidden = true);
+    $("#send-confirm").addEventListener("click", () => {
+      $("#send-modal").hidden = true;
+      doSettle($("#send-confirm"));
+    });
 
     $("#goal-cancel").addEventListener("click", () => $("#goal-modal").hidden = true);
     $("#goal-save").addEventListener("click", () => {
@@ -766,7 +830,17 @@ Sophrosyne.UI = (function () {
     $("#settings-btn").addEventListener("click", () => {
       $("#set-dynasty").value = state.dynasty.name || ""; $("#set-era").value = state.reign.eraName || "";
       const llm = state.settings.llm || {};
-      $("#set-llm-base").value = llm.baseUrl || ""; $("#set-llm-key").value = llm.apiKey || ""; $("#set-llm-model").value = llm.model || "";
+      storedLlmKey = llm.apiKey || "";
+      $("#set-llm-base").value = llm.baseUrl || "";
+      $("#set-llm-key").value = "";   // 不把真实密钥回填输入框：脱敏展示
+      $("#set-llm-key").placeholder = storedLlmKey ? "已配置（脱敏 · 留空则保持不变，输入新值可覆盖）" : "sk-...";
+      $("#set-llm-model").value = llm.model || "";
+      const st = $("#llm-status");
+      if (st) {
+        if (llmConfigured()) st.textContent = "已配置：Base URL / 模型 / 密钥均已就绪。";
+        else if (storedLlmKey || llm.baseUrl || llm.model) st.textContent = "部分配置：请补齐 Base URL、API Key 与模型名。";
+        else st.textContent = "未配置：结算将使用本地确定性规则，不外发数据。";
+      }
       $("#settings-modal").hidden = false;
     });
     $("#status-row").addEventListener("click", () => {
@@ -794,8 +868,13 @@ Sophrosyne.UI = (function () {
     $("#settings-save").addEventListener("click", () => {
       if ($("#set-dynasty").value.trim()) state.dynasty.name = $("#set-dynasty").value.trim();
       if ($("#set-era").value.trim()) state.reign.eraName = $("#set-era").value.trim();
-      state.settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: $("#set-llm-key").value.trim(), model: $("#set-llm-model").value.trim() };
+      const keyInput = $("#set-llm-key").value.trim();
+      state.settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: keyInput || storedLlmKey, model: $("#set-llm-model").value.trim() };
       Store.save(state); $("#settings-modal").hidden = true; renderAll(); toast("已保存。");
+    });
+    $("#llm-key-clear").addEventListener("click", () => {
+      storedLlmKey = ""; $("#set-llm-key").value = ""; $("#set-llm-key").placeholder = "sk-...";
+      toast("已清除已存密钥（点「保存」后生效）。");
     });
     $("#reset-btn").addEventListener("click", () => {
       if (!confirm("确定完全重置所有数据？")) return;

@@ -116,7 +116,7 @@ body {
 .custom-row input { flex: 1; }
 
 /* 输入 */
-input[type="text"], select {
+input[type="text"], input[type="password"], input[type="number"], select {
   width: 100%; padding: 8px 10px; background: var(--bg); color: var(--ink);
   border: 1px solid var(--line); border-radius: 8px; font-family: var(--font); font-size: 14px;
 }
@@ -285,6 +285,14 @@ body {
 .console-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .console-quick .console-scene { padding: 6px 12px; font-size: 13px; }
 
+/* 控制台 · 日常汇总态势（政务/民生/军备/文治/朝纲） */
+.console-summary { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 8px; padding-bottom: 2px; }
+.sum-tile { flex: 0 0 auto; min-width: 92px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+.sum-title { font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 2px; }
+.sum-row { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; }
+.sum-k { color: var(--ink-dim); }
+.sum-v { color: var(--ink); font-variant-numeric: tabular-nums; }
+
 /* 突发事件逐项裁决 */
 .ev-policy { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
 .ev-policy:last-child { border-bottom: none; }
@@ -295,6 +303,13 @@ body {
 .settle-entry { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
 .settle-entry input { width: 100%; }
 .settle-entry .se-effects { font-size: 12px; }
+#settle-legend { font-size: 11px; line-height: 1.5; }
+
+/* 外发摘要（拟诏前确认） */
+.send-block { margin-bottom: 8px; }
+.send-block b { color: var(--gold); font-size: 13px; }
+.send-block ul { list-style: none; margin: 4px 0 0; padding: 0; max-height: 140px; overflow: auto; }
+.send-block li { font-size: 12px; color: var(--ink-dim); padding: 2px 0; border-bottom: 1px dashed var(--line); }
 .back-btn { margin-bottom: 8px; background: var(--panel2); color: var(--gold); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-family: var(--font); cursor: pointer; }
 .center { text-align: center; }
 

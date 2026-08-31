@@ -255,16 +255,28 @@ Sophrosyne.UI = (function () {
     const row = $("#status-row");
     if (af) {
       dot.className = "status-dot focus";
-      st.textContent = "临朝 · " + af.gov + (af.realTask ? "——" + af.realTask : "");
+      if (af.status === "awaiting-confirmation") {
+        st.textContent = "临朝到时 · " + af.gov + (af.realTask ? "——" + af.realTask : "") + "（待确认功成或失守）";
+        timer.textContent = "已到时";
+      } else {
+        st.textContent = "临朝 · " + af.gov + (af.realTask ? "——" + af.realTask : "");
+      }
       row.dataset.nav = "";
       fa.hidden = false; aa.hidden = true;
-      updateStatusTimer();
+      if (af.status !== "awaiting-confirmation") updateStatusTimer();
     } else if (ap) {
       dot.className = "status-dot appoint";
-      st.textContent = "预约 · " + ap.name + "（" + ap.appointment + "）";
+      if (ap.status === "overdue") {
+        st.textContent = "预约逾期 · " + ap.name + "（仅可确认失信）";
+        timer.textContent = "已逾期";
+      } else {
+        st.textContent = "预约 · " + ap.name + "（" + ap.appointment + "）";
+      }
       row.dataset.nav = "";
       fa.hidden = true; aa.hidden = false;
-      updateStatusTimer();
+      const fulfill = $("#appointment-fulfill");
+      if (fulfill) fulfill.style.display = ap.status === "overdue" ? "none" : "";
+      if (ap.status !== "overdue") updateStatusTimer();
     } else {
       dot.className = "status-dot idle";
       const last = state.log[0];
@@ -455,6 +467,12 @@ Sophrosyne.UI = (function () {
     if (state.meta.lastTickDate !== Engine.todayStr()) {
       state = Engine.tick(state);
       renderAll();
+      return;
+    }
+    // 状态收敛：临朝到时→待确认结束；预约到期→已逾期（业务规则在引擎）
+    if (Engine.advanceTimers(state)) {
+      renderStatusBar();
+      return;
     }
     updateStatusTimer();
   }

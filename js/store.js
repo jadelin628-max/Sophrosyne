@@ -1,8 +1,9 @@
 /* Sophrosyne — 数据层（localStorage schema + 持久化）v4 */
 window.Sophrosyne = window.Sophrosyne || {};
 Sophrosyne.Store = (function () {
-  const KEY = "sophrosyne.v4";
-  const BACKUP_KEY = "sophrosyne.v4.bak";
+  const KEY = "sophrosyne.v5";
+  const LEGACY_KEY = "sophrosyne.v4";
+  const BACKUP_KEY = "sophrosyne.v5.bak";
   let lastMirrored = null;
 
   function todayStr() {
@@ -27,7 +28,7 @@ Sophrosyne.Store = (function () {
     const Metrics = window.Sophrosyne.Metrics;
     const initM = Metrics ? Metrics.initialMetrics() : {};
     return {
-      version: 4,
+      version: 5,
       settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "" } },
       dynasty: { name: "未定", lineage: [] },
       reign: {
@@ -61,23 +62,48 @@ Sophrosyne.Store = (function () {
     try { return JSON.parse(raw); } catch (e) { return null; }
   }
 
+  // 归一化并迁移旧档到当前 schema：为进行中的临朝/预约补 status，缺失字段用默认补齐
+  function migrate(s) {
+    const now = Date.now();
+    const af = s.activeFocus;
+    if (af && !af.status) af.status = (af.endsAt && now >= af.endsAt) ? "awaiting-confirmation" : "running";
+    const ap = s.activeAppointment || (s.chains && s.chains.appointment && s.chains.appointment.active);
+    if (ap && !ap.status) ap.status = (ap.dueAt && now >= ap.dueAt) ? "overdue" : "pending";
+    s.version = 5;
+    return s;
+  }
+
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(KEY); } catch (e) { /* 读取失败视为无档 */ }
     if (raw) {
       const s = tryParse(raw);
-      if (s) return deepMerge(defaultState(), s);
-      console.warn("主存档损坏，尝试备份……");
+      if (s) return migrate(deepMerge(defaultState(), s));
+      console.warn("主存档损坏，尝试旧档与备份……");
     }
+    // 旧档 v4 迁移
+    try {
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        const s = tryParse(legacy);
+        if (s) {
+          const merged = migrate(deepMerge(defaultState(), s));
+          save(merged);
+          warn("检测到旧存档，已自动迁移到新版。");
+          return merged;
+        }
+      }
+    } catch (e) { /* 无旧档 */ }
     try {
       const bak = localStorage.getItem(BACKUP_KEY);
       const s = bak && tryParse(bak);
-      if (s) { warn("存档损坏，已从备份恢复（可能回退片刻）。"); return deepMerge(defaultState(), s); }
+      if (s) { warn("存档损坏，已从备份恢复（可能回退片刻）。"); return migrate(deepMerge(defaultState(), s)); }
     } catch (e) { /* 无备份 */ }
     return defaultState();
   }
 
   function save(state) {
+    state.version = 5;
     let json;
     try { json = JSON.stringify(state); }
     catch (e) { console.error("存档序列化失败", e); warn("存档失败：数据异常。"); return false; }
@@ -110,6 +136,7 @@ Sophrosyne.Store = (function () {
 
   function deepMerge(def, src) {
     if (src === null || src === undefined) return def;      // 旧档 null（如 log:null）回落默认，避免运行期 TypeError
+    if (def === null || def === undefined) return src;      // 默认档为 null 而存档有对象（如 activeFocus 进行中），用存档
     if (Array.isArray(src)) return src;                     // 数组整取已存数据
     if (Array.isArray(def)) return def;                     // 模板为数组而来源非数组：类型不符，用默认
     if (typeof def === "object" && typeof src === "object") {
@@ -126,5 +153,5 @@ Sophrosyne.Store = (function () {
     return src;
   }
 
-  return { KEY, BACKUP_KEY, load, save, reset, revive, todayStr, defaultState, newChain };
+  return { KEY, BACKUP_KEY, LEGACY_KEY, load, save, reset, revive, todayStr, defaultState, newChain };
 })();

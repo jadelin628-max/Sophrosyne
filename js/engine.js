@@ -159,7 +159,7 @@ Sophrosyne.Engine = (function () {
       sceneId, name: sc.name, gov: sc.gov, appointment: sc.appointment,
       attrs: sc.attrs, primary: sc.primary,
       chain: chainKey || "main", realTask: realTask || "",
-      startedAt: Date.now(), endsAt: Date.now() + minutes * 60000, minutes
+      startedAt: Date.now(), endsAt: Date.now() + minutes * 60000, minutes, status: "running"
     };
     state.activeFocus = af;
     log(state, "临朝：「" + sc.gov + "」" + (realTask ? "——" + realTask : "") + "（" + chainLabel(chainKey) + "）。");
@@ -181,6 +181,15 @@ Sophrosyne.Engine = (function () {
     evaluateSubGoals(state);
     Store.save(state);
     return { number, chain: af.chain };
+  }
+  function expireFocus(state, now) {
+    const af = state.activeFocus;
+    if (!af || af.status === "awaiting-confirmation" || (now || Date.now()) < af.endsAt) return false;
+    af.status = "awaiting-confirmation";
+    af.finishedAt = now || Date.now();
+    log(state, "临朝时限已至，待御前确认功成或失守。");
+    Store.save(state);
+    return true;
   }
   function abandonFocus(state) {
     if (!state.activeFocus) return null;
@@ -207,9 +216,11 @@ Sophrosyne.Engine = (function () {
   }
 
   function scheduleAppointment(state, sceneId) {
+    const current = state.activeAppointment || state.chains.appointment.active;
+    if (current) return { blocked: true, reason: current.status === "overdue" ? "已有逾期预约，请先确认失信。" : "已有待履约预约，请先履约或失信。" };
     const sc = Scenes.get(sceneId);
     if (!sc) return null;
-    const ap = { sceneId, name: sc.name, appointment: sc.appointment, scheduledAt: Date.now(), dueAt: Date.now() + APPOINTMENT_MIN * 60000 };
+    const ap = { sceneId, name: sc.name, appointment: sc.appointment, scheduledAt: Date.now(), dueAt: Date.now() + APPOINTMENT_MIN * 60000, status: "pending" };
     state.activeAppointment = ap;
     state.chains.appointment.active = ap;
     log(state, "预约（" + sc.appointment + "）：「" + sc.name + "」，一刻钟内须临朝。");
@@ -223,6 +234,7 @@ Sophrosyne.Engine = (function () {
   function fulfillAppointment(state) {
     const ap = state.activeAppointment || state.chains.appointment.active;
     if (!ap) return null;
+    if (ap.status === "overdue" || appointmentDue(state)) return { blocked: true, reason: "预约已逾期，请确认失信。" };
     if (state.activeFocus) return { blocked: true, reason: "已有临朝进行中，预约暂不能履约。" };
     state.reign.attributes.prestige = Math.min(100, state.reign.attributes.prestige + 1);
     state.chains.appointment.history.push({ sceneId: ap.sceneId, fulfilled: true, date: todayStr() });
@@ -230,6 +242,14 @@ Sophrosyne.Engine = (function () {
     log(state, "守信履约，威望 +1（现 " + state.reign.attributes.prestige + "）。");
     Store.save(state);
     return startFocus(state, ap.sceneId, "main", "");
+  }
+  function expireAppointment(state, now) {
+    const ap = state.activeAppointment || state.chains.appointment.active;
+    if (!ap || ap.status === "overdue" || (now || Date.now()) < ap.dueAt) return false;
+    ap.status = "overdue";
+    log(state, "预约已逾期，须确认失信后方可再议。");
+    Store.save(state);
+    return true;
   }
   function missAppointment(state) {
     const ap = state.activeAppointment || state.chains.appointment.active;
@@ -240,6 +260,13 @@ Sophrosyne.Engine = (function () {
     log(state, "失信失约，威望 -1（现 " + state.reign.attributes.prestige + "）。");
     Store.save(state);
     return { missed: true };
+  }
+  // 状态收敛：由 UI 每秒调用；仅做"到时→待确认/逾期"的必要转换，不含业务规则。
+  function advanceTimers(state) {
+    let changed = false;
+    if (expireFocus(state)) changed = true;
+    if (expireAppointment(state)) changed = true;
+    return changed;
   }
 
   function checkHeirBirth(state, loveBoost) {
@@ -525,8 +552,8 @@ Sophrosyne.Engine = (function () {
   return {
     init, tick, reignYears, shouldAbdicate, computeLifeSpan, ensureLifeSpan,
     efficiency, scaleEffects, describeEffects, chainLabel,
-    startFocus, completeFocus, abandonFocus, verdict,
-    scheduleAppointment, appointmentDue, fulfillAppointment, missAppointment,
+    startFocus, expireFocus, completeFocus, abandonFocus, verdict,
+    scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, advanceTimers,
     settleYear, fallbackSettle, applySettlement, yearlyAdvance,
     addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy, eventActive,
     enterEventMode, exitEventMode, checkHeirBirth, createHeir, trainHeir,

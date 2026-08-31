@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Sophrosyne · 临朝",
   "short_name": "Sophrosyne",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "以古代皇帝临朝治国为题材的个人自控应用（基于 CTDP 与 RSIP）。",
   "lang": "zh-CN",
   "start_url": "./index.html",

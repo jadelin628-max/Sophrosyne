@@ -1,6 +1,6 @@
 /* Sophrosyne — 启动入口 */
 (function () {
-  const APP_VERSION = "0.4.0";
+  const APP_VERSION = "0.4.1";
   window.Sophrosyne.APP_VERSION = APP_VERSION;
 
   function boot() {

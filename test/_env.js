@@ -9,6 +9,7 @@ global.localStorage = {
 
 require("../js/metrics.js");
 require("../js/scenes.js");
+require("../js/migrate.js");
 require("../js/store.js");
 require("../js/score.js");
 require("../js/engine.js");

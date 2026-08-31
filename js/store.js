@@ -5,6 +5,7 @@ Sophrosyne.Store = (function () {
   const BACKUP_KEY = "sophrosyne.v6.bak";
   // 旧档依次尝试：v5（0.4.1）、v4（更早）；命中即迁移并写回 v6
   const LEGACY_KEYS = ["sophrosyne.v5", "sophrosyne.v4"];
+  const Migrate = window.Sophrosyne.Migrate;   // 状态迁移独立模块（需先于 store.js 加载）
   let lastMirrored = null;
 
   function todayStr() {
@@ -63,38 +64,12 @@ Sophrosyne.Store = (function () {
     try { return JSON.parse(raw); } catch (e) { return null; }
   }
 
-  // 制度「可执行规则」骨架（旧制度迁移时补默认值，保留原名称/分组等信息）
-  function defaultRule() {
-    return { trigger: "", minAction: "", evidence: "", exceptions: [], recovery: "" };
-  }
-  // 归一化并迁移旧档到当前 schema：为进行中的临朝/预约补 status、为旧制度补规则骨架
-  function migrate(s) {
-    const now = Date.now();
-    const af = s.activeFocus;
-    if (af && !af.status) af.status = (af.endsAt && now >= af.endsAt) ? "awaiting-confirmation" : "running";
-    const ap = s.activeAppointment || (s.chains && s.chains.appointment && s.chains.appointment.active);
-    if (ap && !ap.status) ap.status = (ap.dueAt && now >= ap.dueAt) ? "overdue" : "pending";
-    // v5 → v6：旧制度从「名称+分组」扩展为可执行规则，补默认规则骨架
-    if (Array.isArray(s.policies)) {
-      for (const p of s.policies) {
-        if (!p || typeof p !== "object") continue;
-        if (!p.rule || typeof p.rule !== "object") p.rule = defaultRule();
-        else {
-          const r = defaultRule();
-          for (const k of Object.keys(r)) if (p.rule[k] === undefined) p.rule[k] = r[k];
-        }
-      }
-    }
-    s.version = 6;
-    return s;
-  }
-
   function load() {
     let raw = null;
     try { raw = localStorage.getItem(KEY); } catch (e) { /* 读取失败视为无档 */ }
     if (raw) {
       const s = tryParse(raw);
-      if (s) return migrate(deepMerge(defaultState(), s));
+      if (s) return Migrate.migrate(Migrate.deepMerge(defaultState(), s));
       console.warn("主存档损坏，尝试旧档与备份……");
     }
     // 旧档 v5/v4 迁移（依次尝试，命中即写回 v6）
@@ -104,7 +79,7 @@ Sophrosyne.Store = (function () {
         if (legacy) {
           const s = tryParse(legacy);
           if (s) {
-            const merged = migrate(deepMerge(defaultState(), s));
+            const merged = Migrate.migrate(Migrate.deepMerge(defaultState(), s));
             save(merged);
             warn("检测到旧存档，已自动迁移到新版。");
             return merged;
@@ -115,7 +90,7 @@ Sophrosyne.Store = (function () {
     try {
       const bak = localStorage.getItem(BACKUP_KEY);
       const s = bak && tryParse(bak);
-      if (s) { warn("存档损坏，已从备份恢复（可能回退片刻）。"); return migrate(deepMerge(defaultState(), s)); }
+      if (s) { warn("存档损坏，已从备份恢复（可能回退片刻）。"); return Migrate.migrate(Migrate.deepMerge(defaultState(), s)); }
     } catch (e) { /* 无备份 */ }
     return defaultState();
   }
@@ -149,27 +124,8 @@ Sophrosyne.Store = (function () {
     if (!raw || typeof raw !== "object") return null;
     if (typeof raw.reign !== "object" || typeof raw.chains !== "object" || !Array.isArray(raw.policies)) return null;
     if (raw.reign && (typeof raw.reign.metrics !== "object" || !raw.reign.metrics)) return null;
-    return deepMerge(defaultState(), raw);
+    return Migrate.deepMerge(defaultState(), raw);
   }
 
-  function deepMerge(def, src) {
-    if (src === null || src === undefined) return def;      // 旧档 null（如 log:null）回落默认，避免运行期 TypeError
-    if (def === null || def === undefined) return src;      // 默认档为 null 而存档有对象（如 activeFocus 进行中），用存档
-    if (Array.isArray(src)) return src;                     // 数组整取已存数据
-    if (Array.isArray(def)) return def;                     // 模板为数组而来源非数组：类型不符，用默认
-    if (typeof def === "object" && typeof src === "object") {
-      const out = {};
-      for (const k of Object.keys(def)) {
-        if (k in src) out[k] = deepMerge(def[k], src[k]);
-        else out[k] = def[k];
-      }
-      for (const k of Object.keys(src)) {
-        if (!(k in out)) out[k] = src[k];
-      }
-      return out;
-    }
-    return src;
-  }
-
-  return { KEY, BACKUP_KEY, LEGACY_KEYS, load, save, reset, revive, todayStr, defaultState, newChain, defaultRule };
+  return { KEY, BACKUP_KEY, LEGACY_KEYS, load, save, reset, revive, todayStr, defaultState, newChain };
 })();

@@ -2,7 +2,7 @@
 global.window = globalThis;
 const mem = {};
 global.localStorage = { getItem:k=>k in mem?mem[k]:null, setItem:(k,v)=>{mem[k]=String(v);}, removeItem:k=>{delete mem[k];} };
-require("../js/metrics.js"); require("../js/scenes.js"); require("../js/store.js");
+require("../js/metrics.js"); require("../js/scenes.js"); require("../js/migrate.js"); require("../js/store.js");
 require("../js/score.js"); require("../js/engine.js");
 const E = globalThis.Sophrosyne.Engine, Store = globalThis.Sophrosyne.Store;
 function assert(c,m){ if(!c){console.error("FAIL:",m);process.exit(1);} console.log("  ok -",m); }

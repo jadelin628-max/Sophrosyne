@@ -368,10 +368,7 @@ Sophrosyne.UI = (function () {
     ).join("");
   }
   function renderEventStatus(el) {
-    const em = state.reign.eventMode;
-    if (!em || !em.active) { el.innerHTML = '<p class="hint">天下无事。</p>'; return; }
-    el.innerHTML = '<div class="banner"><p>非常时期：「' + escapeHtml(em.text || "") + '」——制度树冻结、不计坚持天数。</p></div>' +
-      '<div class="row"><button data-eact="ok" class="btn">结束（合规）</button><button data-eact="bad" class="btn danger">结束（违规·重置制度树）</button></div>';
+    el.innerHTML = '<p class="hint">突发事件报备时，逐项对受影响制度裁决（判失守 / 立为成例）。</p>';
   }
   function renderGoals() {
     const el = $("#goal-list");
@@ -546,16 +543,27 @@ Sophrosyne.UI = (function () {
     if (first) setTimeout(() => first.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
   function handleVenueAction(act, btn) {
-    if (act === "event") { $("#event-text").value = ""; $("#event-modal").hidden = false; }
+    if (act === "event") { $("#event-text").value = ""; renderEventPolicies(); $("#event-modal").hidden = false; }
     else if (act === "goal") { $("#goal-name").value = ""; $("#goal-flavor").value = ""; $("#goal-modal").hidden = false; }
     else if (act === "policy-add") {
       if (!Engine.policyAddAllowed(state)) { toast("今日已颁行过制度，明日再议。"); return; }
-      if (Engine.eventActive(state)) { toast("突发事件期间禁止颁行制度。"); return; }
       $("#policy-modal").hidden = false;
     }
     else if (act === "settle") { doSettle(btn); }
     else if (act === "llm") { openLlm(); }
     else if (act === "abdicate") { openAbdicate(); }
+  }
+  function renderEventPolicies() {
+    const el = $("#event-policies");
+    if (!el) return;
+    const act = state.policies.filter(p => p.status === "active");
+    if (!act.length) { el.innerHTML = '<p class="hint">暂无在行制度，无需逐项裁决。</p>'; return; }
+    el.innerHTML = act.map(p =>
+      '<div class="ev-policy" data-policy-id="' + p.id + '"><span class="ev-name">' + escapeHtml(p.name) + '</span>' +
+      '<label class="ev-opt"><input type="radio" name="ev-' + p.id + '" value="ignore" checked> 不受影响</label>' +
+      '<label class="ev-opt"><input type="radio" name="ev-' + p.id + '" value="collapse"> 判失守</label>' +
+      '<label class="ev-opt"><input type="radio" name="ev-' + p.id + '" value="precedent"> 立为成例</label></div>'
+    ).join("");
   }
   async function doSettle(btn) {
     btn.disabled = true; const orig = btn.textContent; btn.textContent = "结算中…";
@@ -653,11 +661,15 @@ Sophrosyne.UI = (function () {
     $("#event-enter").addEventListener("click", () => {
       const text = $("#event-text").value.trim();
       if (!text) { toast("请描述事件。"); return; }
-      Engine.enterEventMode(state, text); $("#event-modal").hidden = true; renderAll(); toast("已进入非常时期。");
-    });
-    $("#event-status").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-eact]"); if (!btn) return;
-      Engine.exitEventMode(state, btn.dataset.eact === "ok"); renderAll(); toast(btn.dataset.eact === "ok" ? "合规结束。" : "违规结束，制度树已重置。");
+      const decisions = [];
+      $$("#event-policies .ev-policy").forEach(row => {
+        const checked = row.querySelector('input[type="radio"]:checked');
+        if (checked && checked.value !== "ignore") {
+          decisions.push({ policyId: row.dataset.policyId, decision: checked.value });
+        }
+      });
+      Engine.adjudicateEvent(state, { text, decisions });
+      $("#event-modal").hidden = true; renderAll(); toast("已报备并逐项裁决。");
     });
 
     $("#goal-cancel").addEventListener("click", () => $("#goal-modal").hidden = true);

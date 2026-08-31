@@ -62,18 +62,16 @@ async function main() {
   const c2 = E.collapsePolicy(state, pid);
   assert(c2.collapsed === true, "复活耗尽后诏废");
 
-  console.log("[6] 突发事件状态机");
+  console.log("[6] 突发事件逐项裁决");
   state.meta.lastPolicyAddDate = null;
   const p2 = E.addPolicy(state, { name: "晨起不碰手机", group: "作息" });
   const pid2 = p2.policy.id;
-  E.enterEventMode(state, "偶感风寒");
-  assert(E.eventActive(state), "进入非常时期");
-  assert(!E.addPolicy(state, { name: "第三条", group: "x" }).ok, "冻结期间禁止颁行");
-  E.exitEventMode(state, true);
-  assert(!E.eventActive(state), "合规结束，恢复如常");
-  E.enterEventMode(state, "出差数日");
-  E.exitEventMode(state, false);
-  assert(state.policies.find(x => x.id === pid2).status === "fallen", "违规重置制度树");
+  E.adjudicateEvent(state, { text: "偶感风寒", decisions: [{ policyId: pid2, decision: "precedent" }] });
+  const pp2 = state.policies.find(x => x.id === pid2);
+  assert(pp2.status === "active", "立为成例：制度保持在线");
+  assert(pp2.rule && pp2.rule.exceptions.length === 1, "成例写入制度例外");
+  E.adjudicateEvent(state, { text: "出差数日", decisions: [{ policyId: pid2, decision: "collapse" }] });
+  assert(state.policies.find(x => x.id === pid2).status === "fallen", "判失守：制度诏废");
 
   console.log("[7] 阶段目标（政务总数 / 国力指标，可多选）");
   const g = E.addGoal(state, { name: "考研上岸", flavor: "击退游牧" });

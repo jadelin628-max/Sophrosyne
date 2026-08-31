@@ -299,15 +299,20 @@ Sophrosyne.Engine = (function () {
   }
 
   function policyAddAllowed(state) { return state.meta.lastPolicyAddDate !== todayStr(); }
-  function eventActive(state) { return !!(state.reign.eventMode && state.reign.eventMode.active); }
   function addPolicy(state, data) {
     if (!policyAddAllowed(state)) return { ok: false, reason: "今日已颁行过制度，明日再议。" };
-    if (eventActive(state)) return { ok: false, reason: "突发事件期间禁止修改制度树。" };
     const p = {
       id: uid(), name: data.name, group: data.group || "", flavor: data.flavor || "",
       parentId: data.parentId || null, status: "active",
       solidity: 0, solidityCap: 100, survivalDays: 0, collapseCount: 0,
-      level: 0, revive: 0, strengthened: false, createdAt: todayStr()
+      level: 0, revive: 0, strengthened: false, createdAt: todayStr(),
+      rule: {
+        trigger: (data.rule && data.rule.trigger) || "",
+        minAction: (data.rule && data.rule.minAction) || "",
+        evidence: (data.rule && data.rule.evidence) || "",
+        exceptions: (data.rule && data.rule.exceptions) || [],
+        recovery: (data.rule && data.rule.recovery) || ""
+      }
     };
     state.policies.push(p);
     state.meta.lastPolicyAddDate = todayStr();
@@ -316,7 +321,6 @@ Sophrosyne.Engine = (function () {
     return { ok: true, policy: p };
   }
   function collapsePolicy(state, id) {
-    if (eventActive(state)) return { collapsed: false, reason: "突发事件期间禁止修改制度树。" };
     const p = state.policies.find(x => x.id === id);
     if (!p) return { collapsed: false };
     if (p.level > 0 && p.revive > 0) {
@@ -339,7 +343,6 @@ Sophrosyne.Engine = (function () {
     return { collapsed: true };
   }
   function rescuePolicy(state, id, newParentId) {
-    if (eventActive(state)) return;
     const p = state.policies.find(x => x.id === id);
     if (!p) return;
     p.status = "active";
@@ -348,7 +351,6 @@ Sophrosyne.Engine = (function () {
     Store.save(state);
   }
   function upgradePolicy(state, id) {
-    if (eventActive(state)) return { ok: false, reason: "突发事件期间禁止修改制度树。" };
     const p = state.policies.find(x => x.id === id);
     if (!p || p.status !== "active") return { ok: false, reason: "制度不在行。" };
     if (p.solidity < (p.solidityCap || 100)) return { ok: false, reason: "固化度未满。" };
@@ -361,7 +363,6 @@ Sophrosyne.Engine = (function () {
     return { ok: true };
   }
   function strengthenPolicy(state, id) {
-    if (eventActive(state)) return { ok: false, reason: "突发事件期间禁止修改制度树。" };
     const p = state.policies.find(x => x.id === id);
     if (!p || p.status !== "active") return { ok: false, reason: "制度不在行。" };
     if (p.level < 1) return { ok: false, reason: "需先升级方可强化。" };
@@ -371,30 +372,21 @@ Sophrosyne.Engine = (function () {
     return { ok: true };
   }
 
-  function enterEventMode(state, text) {
-    state.reign.eventMode = { active: true, since: todayStr(), text: text || "" };
-    log(state, "报备突发事件（" + (text || "未书明") + "），进入非常时期：制度树冻结，不计坚持天数。");
-    Store.save(state);
-    return state;
-  }
-  function exitEventMode(state, compliant) {
-    const text = state.reign.eventMode && state.reign.eventMode.text;
-    state.reign.eventMode = null;
-    if (compliant) {
-      log(state, "非常时期结束（合规），一切恢复如常。");
-    } else {
-      for (const p of state.policies) {
-        if (p.level > 0) {
-          p.level -= 1; p.revive = Math.max(0, p.revive - 1);
-          p.solidityCap = Math.max(100, p.solidityCap - 50);
-          p.solidity = Math.floor(p.solidity / 2);
-          p.status = "active";
-        } else if (p.status !== "fallen") {
-          p.status = "fallen"; p.solidity = Math.floor(p.solidity / 2); p.collapseCount += 1;
-        }
-        // 已废制度不再重复减半/累加崩坏次数
+  // 突发事件逐项裁决（替代全局冻结/整树重置）：对每项受影响制度选「判失守」或「立为成例」
+  function adjudicateEvent(state, { text, decisions }) {
+    decisions = decisions || [];
+    log(state, "报备突发事件（" + (text || "未书明") + "），逐项裁决。");
+    for (const d of decisions) {
+      const p = state.policies.find(x => x.id === d.policyId);
+      if (!p) continue;
+      if (d.decision === "collapse") {
+        collapsePolicy(state, p.id);
+        log(state, "判失守：「" + p.name + "」及其从属制度诏废。");
+      } else if (d.decision === "precedent") {
+        if (!p.rule) p.rule = { trigger: "", minAction: "", evidence: "", exceptions: [], recovery: "" };
+        p.rule.exceptions.push(text || "(未书明)");
+        log(state, "立为成例：「" + p.name + "」因「" + (text || "未书明") + "」永久豁免。");
       }
-      log(state, "非常时期结束（判违规），制度树重置；已升级者降级保全。");
     }
     Store.save(state);
     return state;
@@ -555,8 +547,8 @@ Sophrosyne.Engine = (function () {
     startFocus, expireFocus, completeFocus, abandonFocus, verdict,
     scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, advanceTimers,
     settleYear, fallbackSettle, applySettlement, yearlyAdvance,
-    addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy, eventActive,
-    enterEventMode, exitEventMode, checkHeirBirth, createHeir, trainHeir,
+    addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy,
+    adjudicateEvent, checkHeirBirth, createHeir, trainHeir,
     addGoal, addSubGoal, resolveGoal, evaluateSubGoals, criterionMet, describeCriterion, countSubGoalsDone,
     abdicate, log, todayStr, daysBetween, ERA_NAMES
   };

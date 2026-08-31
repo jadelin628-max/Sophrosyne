@@ -284,6 +284,12 @@ body {
 .console-label { font-size: 11px; color: var(--ink-dim); margin: 4px 0 6px; }
 .console-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .console-quick .console-scene { padding: 6px 12px; font-size: 13px; }
+
+/* 突发事件逐项裁决 */
+.ev-policy { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.ev-policy:last-child { border-bottom: none; }
+.ev-name { flex: 1 1 100%; font-weight: 600; color: var(--ink); font-size: 13px; }
+.ev-opt { font-size: 12px; color: var(--ink-dim); display: inline-flex; align-items: center; gap: 4px; }
 .back-btn { margin-bottom: 8px; background: var(--panel2); color: var(--gold); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-family: var(--font); cursor: pointer; }
 .center { text-align: center; }
 

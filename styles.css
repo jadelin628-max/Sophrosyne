@@ -268,6 +268,22 @@ body {
 .hotspot { fill: transparent; transition: fill 0.15s, stroke 0.15s; }
 .bldg:hover .hotspot { fill: rgba(201,162,39,0.16); stroke: #c9a227; stroke-width: 2; }
 .bldg-deco { pointer-events: none; }
+
+/* 地图底部可折叠控制台 */
+.console {
+  position: sticky; bottom: 8px; z-index: 55; max-width: 520px; margin: 8px auto 0;
+  background: rgba(30,20,13,0.94); border: 1px solid var(--gold); border-radius: var(--radius);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+}
+.console-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+.console-status { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.console-pending { flex: 0 0 auto; font-size: 12px; color: var(--gold); }
+.console-toggle { flex: 0 0 auto; background: transparent; border: 1px solid var(--line); color: var(--ink-dim); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; }
+.console-toggle:hover { color: var(--gold); border-color: var(--gold); }
+.console-body { padding: 0 12px 12px; }
+.console-label { font-size: 11px; color: var(--ink-dim); margin: 4px 0 6px; }
+.console-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.console-quick .console-scene { padding: 6px 12px; font-size: 13px; }
 .back-btn { margin-bottom: 8px; background: var(--panel2); color: var(--gold); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-family: var(--font); cursor: pointer; }
 .center { text-align: center; }
 

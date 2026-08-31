@@ -174,7 +174,7 @@ Sophrosyne.Engine = (function () {
     for (const a of (af.attrs || [])) {
       if (a in state.reign.attributes) state.reign.attributes[a] = Math.min(100, state.reign.attributes[a] + 1);
     }
-    chain.records.push({ number, name: af.name, gov: af.gov, realTask: af.realTask, date: todayStr(), ts: Date.now() });
+    chain.records.push({ number, sceneId: af.sceneId, name: af.name, gov: af.gov, realTask: af.realTask, date: todayStr(), ts: Date.now() });
     state.reign.todayTasks.push({ sceneId: af.sceneId, realTask: af.realTask, chain: af.chain, ts: Date.now() });
     state.activeFocus = null;
     log(state, "功成：" + chainLabel(af.chain) + " #" + number + "「" + af.gov + "」" + (af.realTask ? "——" + af.realTask : "") + "（待岁末结算）");

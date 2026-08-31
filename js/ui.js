@@ -11,6 +11,11 @@ Sophrosyne.UI = (function () {
   let selectedChain = "main";
   let verdictTarget = null;
   let subGoalGoalId = null;
+  // 开发开关：URL 带 ?dev 或 localStorage sophrosyne.dev=1 时显示坐标网格/轴标
+  const DEV = (function () {
+    try { return location.search.includes("dev") || localStorage.getItem("sophrosyne.dev") === "1"; }
+    catch (e) { return false; }
+  })();
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -155,18 +160,20 @@ Sophrosyne.UI = (function () {
     // 单张俯视平面图铺满 viewBox
     let html = '<rect x="0" y="0" width="640" height="1240" fill="#171310"/>' +
       '<image href="assets/generated/palace_plan.webp" x="0" y="0" width="640" height="1240" preserveAspectRatio="none"/>';
-    // 坐标网格 + 轴标（便于提交调整位置：上= x，左= y）
-    for (let gx = 0; gx <= 640; gx += 80) {
-      html += '<line x1="' + gx + '" y1="0" x2="' + gx + '" y2="1240" stroke="rgba(201,162,39,0.10)" stroke-width="1"/>';
-    }
-    for (let gy = 0; gy <= 1240; gy += 124) {
-      html += '<line x1="0" y1="' + gy + '" x2="640" y2="' + gy + '" stroke="rgba(201,162,39,0.10)" stroke-width="1"/>';
-    }
-    for (let gx = 0; gx <= 640; gx += 80) {
-      html += '<text x="' + gx + '" y="14" text-anchor="middle" fill="rgba(233,220,195,0.72)" font-size="11" stroke="rgba(0,0,0,0.7)" stroke-width="2" paint-order="stroke">' + gx + '</text>';
-    }
-    for (let gy = 0; gy <= 1240; gy += 124) {
-      html += '<text x="12" y="' + (gy + 4) + '" text-anchor="start" fill="rgba(233,220,195,0.72)" font-size="11" stroke="rgba(0,0,0,0.7)" stroke-width="2" paint-order="stroke">' + gy + '</text>';
+    // 坐标网格 + 轴标（仅开发模式显示）
+    if (DEV) {
+      for (let gx = 0; gx <= 640; gx += 80) {
+        html += '<line x1="' + gx + '" y1="0" x2="' + gx + '" y2="1240" stroke="rgba(201,162,39,0.10)" stroke-width="1"/>';
+      }
+      for (let gy = 0; gy <= 1240; gy += 124) {
+        html += '<line x1="0" y1="' + gy + '" x2="640" y2="' + gy + '" stroke="rgba(201,162,39,0.10)" stroke-width="1"/>';
+      }
+      for (let gx = 0; gx <= 640; gx += 80) {
+        html += '<text x="' + gx + '" y="14" text-anchor="middle" fill="rgba(233,220,195,0.72)" font-size="11" stroke="rgba(0,0,0,0.7)" stroke-width="2" paint-order="stroke">' + gx + '</text>';
+      }
+      for (let gy = 0; gy <= 1240; gy += 124) {
+        html += '<text x="12" y="' + (gy + 4) + '" text-anchor="start" fill="rgba(233,220,195,0.72)" font-size="11" stroke="rgba(0,0,0,0.7)" stroke-width="2" paint-order="stroke">' + gy + '</text>';
+      }
     }
     // 各建筑：可点 → 交互热点 + 标签；装饰 → 仅标签
     for (const b of PALACE) {
@@ -245,6 +252,7 @@ Sophrosyne.UI = (function () {
     renderRecord();           // 文渊阁：起居注
     Object.keys(VENUES).forEach(renderVenueInfo);  // 各殿「本殿事务」说明
     renderHistory();          // 奉先殿：实录
+    renderConsole();          // 地图底部控制台
   }
 
   function renderStatusBar() {
@@ -462,6 +470,23 @@ Sophrosyne.UI = (function () {
     }).join("");
   }
 
+  function renderConsole() {
+    const st = $("#console-status"), pending = $("#console-pending"), quick = $("#console-quick");
+    if (!st) return;
+    const af = state.activeFocus;
+    const ap = state.activeAppointment || state.chains.appointment.active;
+    if (af) st.textContent = (af.status === "awaiting-confirmation" ? "临朝待确认" : "临朝中") + " · " + af.gov;
+    else if (ap) st.textContent = (ap.status === "overdue" ? "预约逾期" : "预约中") + " · " + ap.name;
+    else st.textContent = "今日无事";
+    pending.textContent = state.reign.todayTasks.length ? "待结算 " + state.reign.todayTasks.length + " 件" : "";
+    const seen = new Set(); const rec = [];
+    const all = state.chains.main.records.concat(state.chains.reserve.records).slice(-24).reverse();
+    for (const r of all) { if (!r.sceneId || seen.has(r.sceneId)) continue; seen.add(r.sceneId); rec.push(r); if (rec.length >= 3) break; }
+    quick.innerHTML = rec.map(r =>
+      '<button class="scene-btn console-scene" data-quick-scene="' + r.sceneId + '">' + escapeHtml(r.name) + '</button>'
+    ).join("") || '<span class="hint">尚无临朝纪录。</span>';
+  }
+
   function updateTimers() {
     // 跨现实日自动结算（一天 = 一年），避免应用常驻时不刷新导致年龄停滞
     if (state.meta.lastTickDate !== Engine.todayStr()) {
@@ -574,6 +599,12 @@ Sophrosyne.UI = (function () {
       if (infoBtn) { revealPanels(infoBtn.dataset.targets.split(",")); return; }
       const appointBtn = e.target.closest(".appoint-btn");
       if (appointBtn) { Engine.scheduleAppointment(state, appointBtn.dataset.appoint); renderAll(); toast("已预约，一刻钟内须临朝。"); return; }
+      const quickBtn = e.target.closest("[data-quick-scene]");
+      if (quickBtn) {
+        const r = Engine.startFocus(state, quickBtn.dataset.quickScene, "main", "");
+        if (r && r.blocked) toast(r.reason); else { renderAll(); toast("已开始临朝。"); }
+        return;
+      }
     });
     document.addEventListener("input", (e) => {
       if (!e.target.classList.contains("venue-task")) return;
@@ -690,6 +721,13 @@ Sophrosyne.UI = (function () {
       const nav = $("#status-row").dataset.nav;
       if (nav) openView(nav);
     });
+    $("#console-toggle").addEventListener("click", () => {
+      const body = $("#console-body"), btn = $("#console-toggle");
+      const hidden = body.hidden; body.hidden = !hidden;
+      btn.textContent = hidden ? "▴" : "▾";
+      btn.setAttribute("aria-expanded", String(hidden));
+    });
+    $("#console-review").addEventListener("click", () => openView("record"));
     // 键盘可达：status-row 与模态 ESC 关闭
     $("#status-row").addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#status-row").click(); }

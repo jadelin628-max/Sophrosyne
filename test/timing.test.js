@@ -52,20 +52,36 @@ console.log("[4] 预约逾期不可履约，只能确认失信");
   assert(m && m.missed === true, "确认失信入账（威望-1）");
 }
 
-console.log("[5] 旧 v4 档迁移（补 status、写回 v5、保留数据）");
+console.log("[5] 旧 v5 档迁移（补 status、补制度规则骨架、写回 v6、保留数据）");
 {
   const legacy = E.init();
-  legacy.version = 4;
+  legacy.version = 5;
   legacy.dynasty.name = "大夏";          // 校验自定义字段保留
+  legacy.policies = [{ id:"p1", name:"子时后不碰手机", group:"作息", status:"active", solidity:20, solidityCap:100, survivalDays:3, collapseCount:0, level:0, revive:0, strengthened:false, createdAt:"2024-01-01", parentId:null }];
   legacy.activeFocus = { sceneId:"audience", name:"御门听政", gov:"御门听政、面奏章疏", chain:"main", realTask:"", startedAt:Date.now(), endsAt: Date.now()-1000, minutes:60 };
   legacy.activeAppointment = { sceneId:"read", name:"研读经典", appointment:"沐浴焚香", scheduledAt:Date.now(), dueAt: Date.now()+60000 };
-  mem["sophrosyne.v4"] = JSON.stringify(legacy);
-  delete mem["sophrosyne.v5"]; delete mem["sophrosyne.v5.bak"];
+  mem["sophrosyne.v5"] = JSON.stringify(legacy);
+  delete mem["sophrosyne.v6"]; delete mem["sophrosyne.v6.bak"];
   const s = Store.load();
   assert(s.activeFocus.status === "awaiting-confirmation", "旧进行中临朝迁移为待确认");
   assert(s.activeAppointment.status === "pending", "旧预约迁移为待履约");
   assert(s.dynasty.name === "大夏", "自定义字段保留");
-  assert("sophrosyne.v5" in mem, "迁移后写回 v5 档");
+  assert(s.version === 6, "迁移后版本号为 6");
+  const pol = s.policies.find(p => p.id === "p1");
+  assert(pol && pol.rule && Array.isArray(pol.rule.exceptions), "旧制度补默认规则骨架");
+  assert(pol.name === "子时后不碰手机" && pol.group === "作息", "旧制度名称/分组保留");
+  assert("sophrosyne.v6" in mem, "迁移后写回 v6 档");
+}
+
+console.log("[5b] 旧 v4 档直接迁到 v6");
+{
+  const legacy = E.init();
+  legacy.version = 4;
+  legacy.dynasty.name = "大夏";
+  mem["sophrosyne.v4"] = JSON.stringify(legacy);
+  delete mem["sophrosyne.v6"]; delete mem["sophrosyne.v6.bak"]; delete mem["sophrosyne.v5"];
+  const s = Store.load();
+  assert(s.version === 6 && s.dynasty.name === "大夏", "v4 档自动迁移并写回 v6");
 }
 
 if (failed) { console.error("TIMING FAIL — "+failed+" 项未过"); process.exit(1); }

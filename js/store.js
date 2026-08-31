@@ -1,9 +1,10 @@
-/* Sophrosyne — 数据层（localStorage schema + 持久化）v4 */
+/* Sophrosyne — 数据层（localStorage schema + 持久化）v6 */
 window.Sophrosyne = window.Sophrosyne || {};
 Sophrosyne.Store = (function () {
-  const KEY = "sophrosyne.v5";
-  const LEGACY_KEY = "sophrosyne.v4";
-  const BACKUP_KEY = "sophrosyne.v5.bak";
+  const KEY = "sophrosyne.v6";
+  const BACKUP_KEY = "sophrosyne.v6.bak";
+  // 旧档依次尝试：v5（0.4.1）、v4（更早）；命中即迁移并写回 v6
+  const LEGACY_KEYS = ["sophrosyne.v5", "sophrosyne.v4"];
   let lastMirrored = null;
 
   function todayStr() {
@@ -28,7 +29,7 @@ Sophrosyne.Store = (function () {
     const Metrics = window.Sophrosyne.Metrics;
     const initM = Metrics ? Metrics.initialMetrics() : {};
     return {
-      version: 5,
+      version: 6,
       settings: { focusMinutes: 60, llm: { baseUrl: "", apiKey: "", model: "" } },
       dynasty: { name: "未定", lineage: [] },
       reign: {
@@ -62,14 +63,29 @@ Sophrosyne.Store = (function () {
     try { return JSON.parse(raw); } catch (e) { return null; }
   }
 
-  // 归一化并迁移旧档到当前 schema：为进行中的临朝/预约补 status，缺失字段用默认补齐
+  // 制度「可执行规则」骨架（旧制度迁移时补默认值，保留原名称/分组等信息）
+  function defaultRule() {
+    return { trigger: "", minAction: "", evidence: "", exceptions: [], recovery: "" };
+  }
+  // 归一化并迁移旧档到当前 schema：为进行中的临朝/预约补 status、为旧制度补规则骨架
   function migrate(s) {
     const now = Date.now();
     const af = s.activeFocus;
     if (af && !af.status) af.status = (af.endsAt && now >= af.endsAt) ? "awaiting-confirmation" : "running";
     const ap = s.activeAppointment || (s.chains && s.chains.appointment && s.chains.appointment.active);
     if (ap && !ap.status) ap.status = (ap.dueAt && now >= ap.dueAt) ? "overdue" : "pending";
-    s.version = 5;
+    // v5 → v6：旧制度从「名称+分组」扩展为可执行规则，补默认规则骨架
+    if (Array.isArray(s.policies)) {
+      for (const p of s.policies) {
+        if (!p || typeof p !== "object") continue;
+        if (!p.rule || typeof p.rule !== "object") p.rule = defaultRule();
+        else {
+          const r = defaultRule();
+          for (const k of Object.keys(r)) if (p.rule[k] === undefined) p.rule[k] = r[k];
+        }
+      }
+    }
+    s.version = 6;
     return s;
   }
 
@@ -81,19 +97,21 @@ Sophrosyne.Store = (function () {
       if (s) return migrate(deepMerge(defaultState(), s));
       console.warn("主存档损坏，尝试旧档与备份……");
     }
-    // 旧档 v4 迁移
-    try {
-      const legacy = localStorage.getItem(LEGACY_KEY);
-      if (legacy) {
-        const s = tryParse(legacy);
-        if (s) {
-          const merged = migrate(deepMerge(defaultState(), s));
-          save(merged);
-          warn("检测到旧存档，已自动迁移到新版。");
-          return merged;
+    // 旧档 v5/v4 迁移（依次尝试，命中即写回 v6）
+    for (const LK of LEGACY_KEYS) {
+      try {
+        const legacy = localStorage.getItem(LK);
+        if (legacy) {
+          const s = tryParse(legacy);
+          if (s) {
+            const merged = migrate(deepMerge(defaultState(), s));
+            save(merged);
+            warn("检测到旧存档，已自动迁移到新版。");
+            return merged;
+          }
         }
-      }
-    } catch (e) { /* 无旧档 */ }
+      } catch (e) { /* 无此旧档 */ }
+    }
     try {
       const bak = localStorage.getItem(BACKUP_KEY);
       const s = bak && tryParse(bak);
@@ -103,7 +121,7 @@ Sophrosyne.Store = (function () {
   }
 
   function save(state) {
-    state.version = 5;
+    state.version = 6;
     let json;
     try { json = JSON.stringify(state); }
     catch (e) { console.error("存档序列化失败", e); warn("存档失败：数据异常。"); return false; }
@@ -153,5 +171,5 @@ Sophrosyne.Store = (function () {
     return src;
   }
 
-  return { KEY, BACKUP_KEY, LEGACY_KEY, load, save, reset, revive, todayStr, defaultState, newChain };
+  return { KEY, BACKUP_KEY, LEGACY_KEYS, load, save, reset, revive, todayStr, defaultState, newChain, defaultRule };
 })();

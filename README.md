@@ -22,9 +22,9 @@ python -m http.server 8000   # 或 npx --yes http-server -p 8000
 
 ## 说明
 
-- 纯前端 + `localStorage`（键 `sophrosyne.v4`），无后端；可选接入 OpenAI 兼容 LLM 做「史官 AI」风味化。
+- 纯前端 + `localStorage`（键 `sophrosyne.v6`，自动迁移 v5/v4 旧档），无后端；可选接入 OpenAI 兼容 LLM 做「史官 AI」风味化。
 - 目录：`js/`（模型/引擎/UI）、`assets/`（WebP 美术资产）、`tools/`（资产处理脚本）、`test/`（单元/冒烟测试）。
-- 版本三要素：应用版本用 SemVer（见 `manifest.json`）；存储键 `sophrosyne.v4` 仅数据结构变化才 bump；`sw.js` 的缓存键仅用于离线刷新。
+- 版本三要素：应用版本用 SemVer（见 `manifest.json`）；存储键 `sophrosyne.v6` 仅数据结构变化才 bump；`sw.js` 的缓存键仅用于离线刷新。
 
 ## 变更记录
 

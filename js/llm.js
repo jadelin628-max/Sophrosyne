@@ -143,22 +143,48 @@ Sophrosyne.LLM = (function () {
     try { data = await res.json(); }
     catch (e) { throw new Error("LLM 返回的不是有效 JSON（可能是网关错误页）。"); }
     const c = data.choices && data.choices[0] && data.choices[0].message;
-    return c ? c.content.trim() : "";
+    if (!c) throw new Error("模型未返回内容（choices 为空）。");
+    const content = (typeof c.content === "string") ? c.content : "";
+    if (!content.trim()) {
+      if (c.reasoning_content) throw new Error("模型只返回了思考过程(reasoning_content)、未给出结论；请调大「最大输出 token」或改用非推理模型。");
+      throw new Error("模型返回了空内容。");
+    }
+    return content.trim();
   }
 
+  // 括号配平：截断的 JSON 补齐缺失的闭合括号，用于挽救被 max_tokens 截断的输出
+  function balanceJson(s) {
+    const stack = [];
+    let inStr = false, esc = false;
+    for (const ch of s) {
+      if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
+      if (ch === '"') { inStr = true; continue; }
+      if (ch === "{") stack.push("}");
+      else if (ch === "[") stack.push("]");
+      else if (ch === "}" || ch === "]") { if (stack.length && stack[stack.length - 1] === ch) stack.pop(); }
+    }
+    return stack.length ? s + stack.reverse().join("") : s;
+  }
   function extractJson(text) {
-    const s = text.indexOf("{");
-    const e = text.lastIndexOf("}");
-    if (s < 0 || e <= s) return null;
-    try { return JSON.parse(text.slice(s, e + 1)); }
-    catch (err) { return null; }
+    if (!text) return null;
+    let s = String(text).trim().replace(/```[a-zA-Z]*\s*/g, "").trim();   // 去 markdown 代码围栏
+    const i = s.indexOf("{");
+    if (i < 0) return null;
+    const seg = s.slice(i);
+    // 1) 常见情形：完整 JSON（或其后还跟着说明文字）——截到最后一个 } 尝试解析
+    const last = seg.lastIndexOf("}");
+    if (last >= 0) { try { return JSON.parse(seg.slice(0, last + 1)); } catch (e) { /* 继续尝试修复 */ } }
+    // 2) 被截断：补齐缺失括号再解析
+    const repaired = balanceJson(seg);
+    if (repaired !== seg) { try { return JSON.parse(repaired); } catch (e) { /* 无法挽救 */ } }
+    return null;
   }
 
   // 岁末结算（旧路径，保留）：返回 entries；失败抛错
   async function settle(state, tasks) {
     const text = await chat(state, buildSettlePrompt(state, tasks), config(state).maxTokens);
     const obj = extractJson(text);
-    if (!obj || !Array.isArray(obj.entries)) throw new Error("LLM 输出无法解析为 JSON");
+    if (!obj || !Array.isArray(obj.entries)) throw new Error("LLM 输出无法解析为 JSON（原文片段：" + truncate(text, 240) + "）");
     return obj.entries.filter(e => e && typeof e === "object" && (e.title || e.note || e.effects));
   }
 
@@ -224,7 +250,7 @@ Sophrosyne.LLM = (function () {
   async function proposeSettlement(state, tasks) {
     const text = await chat(state, buildSettlePrompt(state, tasks), config(state).maxTokens);
     const draft = sanitizeDraft(extractJson(text));
-    if (!draft || !draft.entries.length) throw new Error("LLM 输出无法解析或为空");
+    if (!draft || !draft.entries.length) throw new Error("LLM 输出无法解析或为空（原文片段：" + truncate(text, 240) + "）");
     return draft;
   }
 

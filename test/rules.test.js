@@ -112,7 +112,8 @@ console.log("[10] extractJson");
   const good = LLM.extractJson('前言```json\n{"entries":[]}\n```后记');
   assert(good && Array.isArray(good.entries), "容忍围栏与首尾杂文");
   assert(LLM.extractJson("没有任何大括号") === null, "无 JSON → null");
-  assert(LLM.extractJson('{"a":1') === null, "截断 JSON → null 不抛错");
+  const repaired = LLM.extractJson('{"a":1');
+  assert(repaired && repaired.a === 1, "截断 JSON 自动补齐括号可解析");
 }
 
 if (failed) { console.error("RULES FAIL — " + failed + " 项断言未过"); process.exit(1); }

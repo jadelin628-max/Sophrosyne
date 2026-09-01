@@ -61,5 +61,15 @@ console.log("[4] max_tokens 默认与配置读取");
   assert(LLM.config(s).maxTokens === 99999, "settings.llm.maxTokens 读取（chat 内部 clamp 到 512–16384）");
 }
 
+console.log("[5] extractJson 容错（代码围栏 / 截断修复）");
+{
+  const full = '{"entries":[{"title":"x","effects":{"order":2}}]}';
+  assert(LLM.extractJson("```json\n" + full + "\n```").entries.length === 1, "剥离 markdown 代码围栏");
+  const truncated = '{"entries":[{"title":"x","effects":{"order":2}';
+  const r = LLM.extractJson(truncated);
+  assert(r && r.entries && r.entries[0].effects.order === 2, "截断 JSON 补齐括号后可解析");
+  assert(LLM.extractJson("这不是 JSON") === null, "无 JSON 返回 null");
+}
+
 if (failed) { console.error("PROMPT FAIL — " + failed + " 项未过"); process.exit(1); }
 console.log("PROMPT OK — 提示词/限额/草案校验通过");

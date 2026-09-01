@@ -261,7 +261,8 @@ Sophrosyne.LLM = (function () {
   async function proposeSettlement(state, tasks) {
     const text = await chat(state, buildSettlePrompt(state, tasks), config(state).maxTokens);
     const draft = sanitizeDraft(extractJson(text));
-    if (!draft || !draft.entries.length) throw new Error("LLM 输出无法解析或为空（原文片段：" + truncate(text, 240) + "）");
+    // entries 允许为空（今日无待结算事务，但可能有国策/制度风味化）
+    if (!draft) throw new Error("LLM 输出无法解析（原文片段：" + truncate(text, 240) + "）");
     return draft;
   }
 

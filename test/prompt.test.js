@@ -51,6 +51,7 @@ console.log("[3] sanitizeDraft 校验新增字段（双语/国策/评述）");
   assert(d.goalVerdicts.length === 1 && d.goalVerdicts[0].verdict === "推进有成", "国策评述校验");
   assert(d.subGoalVerdicts.length === 1 && d.subGoalVerdicts[0].subGoalId === "sg1", "阶段目标评述校验");
   assert(d.policyTitles.length === 1 && d.policyTitles[0].policyId === "p1" && d.policyTitles[0].title === "宵禁锁钥", "典章制度风味名校验");
+  assert(LLM.sanitizeDraft({ entries: [] }) !== null, "空 entries 草案仍有效（允许仅风味化国策/制度）");
 }
 
 console.log("[4] max_tokens 默认与配置读取");

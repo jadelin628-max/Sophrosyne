@@ -320,6 +320,9 @@ body {
 .settle-entry .se-effects { font-size: 12px; }
 .se-preview { font-size: 12px; color: var(--ink); background: var(--bg); border: 1px dashed var(--line); border-radius: 6px; padding: 4px 8px; }
 #settle-legend { font-size: 11px; line-height: 1.5; }
+.flavor-preview { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; background: rgba(45,30,18,0.5); }
+.fp-title { font-size: 12px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+.fp-line { font-size: 12px; color: var(--ink); padding: 2px 0; }
 
 /* 外发摘要（拟诏前确认） */
 .send-block { margin-bottom: 8px; }

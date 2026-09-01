@@ -644,6 +644,30 @@ Sophrosyne.UI = (function () {
     if (!el) return;
     el.textContent = "可编辑指标：" + Metrics.STORED_KEYS.map(k => Metrics.DEFS[k].name + "=" + k).join("、");
   }
+  function renderFlavorPreview(r) {
+    const draft = (r && r.draft) || {};
+    const lines = [];
+    for (const it of (draft.goalTitles || [])) {
+      const g = state.goals.find(x => x.id === it.goalId);
+      if (g && it.title) lines.push("国策「" + (g.title || g.name) + "」风味名 → 「" + it.title + "」");
+    }
+    for (const it of (draft.goalVerdicts || [])) {
+      const g = state.goals.find(x => x.id === it.goalId);
+      if (g && it.verdict) lines.push("国策评述：" + it.verdict);
+    }
+    for (const it of (draft.subGoalVerdicts || [])) {
+      let nm = "";
+      for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg) { nm = sg.name; break; } }
+      if (it.verdict) lines.push("阶段目标「" + nm + "」评述：" + it.verdict);
+    }
+    for (const it of (draft.policyTitles || [])) {
+      const p = state.policies.find(x => x.id === it.policyId);
+      if (p && it.title) lines.push("制度「" + (p.title || p.name) + "」风味名 → 「" + it.title + "」");
+    }
+    if (!lines.length) return "";
+    return '<div class="flavor-preview"><div class="fp-title">国策 / 制度风味化</div>' +
+      lines.map(l => '<div class="fp-line">' + escapeHtml(l) + '</div>').join("") + '</div>';
+  }
   function renderSettleEntries(r) {
     const src = r.source === "llm"
       ? "史官拟定的草案（可编辑后确认）"
@@ -663,6 +687,8 @@ Sophrosyne.UI = (function () {
         '<input type="hidden" class="se-modern" value="' + escapeHtml(e.modern || "") + '">' +
       '</div>'
     ).join("") || '<p class="hint">（今日无待结算事务）</p>';
+    const fp = $("#settle-flavors");
+    if (fp) fp.innerHTML = renderFlavorPreview(r);
   }
   function openAbdicate() {
     const sel = $("#abdicate-heir");

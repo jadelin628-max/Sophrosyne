@@ -108,7 +108,9 @@ Sophrosyne.LLM = (function () {
   async function chat(state, userContent, maxTokens) {
     const cfg = config(state);
     if (!cfg.apiKey || !cfg.baseUrl || !cfg.model) throw new Error("请先在「设置」配置大模型（Base URL / API Key / 模型名）。");
-    const url = cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions";
+    // 兼容两种写法：Base URL 若已含 /chat/completions 则原样使用，否则拼接
+    let url = String(cfg.baseUrl).trim().replace(/\/+$/, "");
+    if (!/\/chat\/completions$/.test(url)) url += "/chat/completions";
     const mt = Math.max(512, Math.min(16384, Number(maxTokens) || 4096));
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
@@ -135,7 +137,7 @@ Sophrosyne.LLM = (function () {
     }
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      throw new Error("LLM 返回 HTTP " + res.status + "：" + truncate(t, 200));
+      throw new Error("LLM 返回 HTTP " + res.status + "（请求 " + url + "）：" + truncate(t, 200));
     }
     let data;
     try { data = await res.json(); }

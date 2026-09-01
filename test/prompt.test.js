@@ -42,6 +42,7 @@ console.log("[3] sanitizeDraft 校验新增字段（双语/国策/评述）");
     goalTitles: [{ goalId: "g1", title: "勤学兴教" }, { goalId: "", title: "x" }],
     goalVerdicts: [{ goalId: "g1", verdict: "推进有成" }],
     subGoalVerdicts: [{ subGoalId: "sg1", verdict: "达成" }],
+    policyTitles: [{ policyId: "p1", title: "宵禁锁钥" }, { policyId: "", title: "x" }],
   });
   assert(d && d.entries.length === 2, "条目数正确");
   assert(d.entries[0].classical === "古体" && d.entries[0].modern === "白话", "双语字段保留");
@@ -49,6 +50,7 @@ console.log("[3] sanitizeDraft 校验新增字段（双语/国策/评述）");
   assert(d.goalTitles.length === 1 && d.goalTitles[0].goalId === "g1" && d.goalTitles[0].title === "勤学兴教", "国策风味名校验");
   assert(d.goalVerdicts.length === 1 && d.goalVerdicts[0].verdict === "推进有成", "国策评述校验");
   assert(d.subGoalVerdicts.length === 1 && d.subGoalVerdicts[0].subGoalId === "sg1", "阶段目标评述校验");
+  assert(d.policyTitles.length === 1 && d.policyTitles[0].policyId === "p1" && d.policyTitles[0].title === "宵禁锁钥", "典章制度风味名校验");
 }
 
 console.log("[4] max_tokens 默认与配置读取");

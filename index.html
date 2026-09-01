@@ -310,6 +310,14 @@
     </div>
   </div>
 
+  <div id="task-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" hidden>
+    <div class="modal-card"><h2 id="task-modal-title">履约 · 设置政务名称</h2>
+      <p class="context">预约已履约，即将开始临朝；请填写本次政务的真实名称（可留空）。</p>
+      <label class="field"><span>政务名称（真实任务）</span><input id="task-name" type="text" placeholder="如：背英语单词200个" /></label>
+      <div class="row"><button id="task-cancel" class="btn ghost">取消</button><button id="task-confirm" class="btn primary">开始临朝</button></div>
+    </div>
+  </div>
+
   <div id="subgoal-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="subgoal-modal-title" hidden>
     <div class="modal-card"><h2 id="subgoal-modal-title">分解阶段目标</h2>
       <label class="field"><span>阶段目标名</span><input id="subgoal-name" type="text" placeholder="如：每日背单词" /></label>
@@ -344,6 +352,8 @@
         <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
         <label class="field"><span>最大输出 token（512–16384）</span><input id="set-llm-maxtokens" type="number" min="512" max="16384" step="256" placeholder="4096" /></label>
         <p class="hint" id="llm-status"></p>
+        <div class="row"><button id="llm-test" class="btn">测试接通</button></div>
+        <p class="hint" id="llm-test-result"></p>
       </section>
 
       <section class="settings-panel" data-panel="prompts" hidden>

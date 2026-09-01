@@ -45,6 +45,15 @@ console.log("[3] compressRecords 长度上限");
   assert(out.length <= 120, "摘要截断到上限内");
 }
 
+console.log("[4] 典章制度风味化名回填");
+{
+  const s = freshState();
+  const p = E.addPolicy(s, { name: "子时后不碰手机", group: "作息" }).policy;
+  assert(p.title === "", "新建制度 title 为空");
+  E.applySettlementDraft(s, { entries: [], policyTitles: [{ policyId: p.id, title: "宵禁锁钥" }] });
+  assert(p.title === "宵禁锁钥", "制度风味化名写入");
+}
+
 if (failed) { console.error("SETTLE-V2 FAIL — " + failed + " 项未过"); process.exit(1); }
 console.log("SETTLE-V2 OK — 双语起居录/国策风味化/摘要压缩通过");
 

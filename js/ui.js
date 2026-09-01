@@ -443,7 +443,8 @@ Sophrosyne.UI = (function () {
     el.className = "policy-node" + (p.status === "fallen" ? " fallen" : "");
     el.style.marginLeft = (depth * 18) + "px";
     el.innerHTML =
-      '<div class="policy-line"><span class="policy-name">' + escapeHtml(p.name) + '</span>' +
+      '<div class="policy-line"><span class="policy-name">' + escapeHtml(p.title || p.name) + '</span>' +
+      (p.title && p.title !== p.name ? '<span class="policy-group">' + escapeHtml(p.name) + '</span>' : '') +
       (p.group ? '<span class="policy-group">' + escapeHtml(p.group) + '</span>' : '') +
       '<span class="policy-status">' + (p.status === "active" ? "在行" : "已废") + '</span>' +
       '<span class="policy-meta">固化 ' + p.solidity + '/' + (p.solidityCap || 100) + ' · 坚持 ' + p.survivalDays + ' 天 · Lv' + p.level + (p.revive ? ' · 复活×' + p.revive : '') + (p.strengthened ? ' · 已强化' : '') + '</span>' +
@@ -644,7 +645,10 @@ Sophrosyne.UI = (function () {
     el.textContent = "可编辑指标：" + Metrics.STORED_KEYS.map(k => Metrics.DEFS[k].name + "=" + k).join("、");
   }
   function renderSettleEntries(r) {
-    $("#settle-source").textContent = r.source === "llm" ? "史官拟定的草案（可编辑后确认）" : "本地常例草案（可编辑后确认）";
+    const src = r.source === "llm"
+      ? "史官拟定的草案（可编辑后确认）"
+      : (r.error ? "本地常例草案（大模型未接通：" + r.error + "，可编辑后确认）" : "本地常例草案（可编辑后确认）");
+    $("#settle-source").textContent = src;
     renderSettleLegend();
     const el = $("#settle-entries");
     const entries = (r.draft && r.draft.entries) || [];

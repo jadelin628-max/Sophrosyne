@@ -57,7 +57,15 @@ Sophrosyne.Events = (function () {
     $("#focus-complete").addEventListener("click", () => { const r = Engine.completeFocus(S()); api.renderAll(); api.toast(r ? "功成！主要政务 #" + r.number : "已功成"); });
     $("#focus-abandon").addEventListener("click", () => { const v = Engine.abandonFocus(S()); if (v) api.openVerdict(v.target, "临朝中失守，当廷议裁定。"); });
     $("#appointment-fulfill").addEventListener("click", () => {
-      const r = Engine.fulfillAppointment(S());
+      const ap = S().activeAppointment || S().chains.appointment.active;
+      if (ap && ap.status === "overdue") { api.toast("预约已逾期，只能确认失信。"); return; }
+      $("#task-name").value = "";
+      $("#task-modal").hidden = false;
+    });
+    $("#task-cancel").addEventListener("click", () => $("#task-modal").hidden = true);
+    $("#task-confirm").addEventListener("click", () => {
+      $("#task-modal").hidden = true;
+      const r = Engine.fulfillAppointment(S(), $("#task-name").value.trim());
       if (r && r.blocked) { api.toast(r.reason); return; }
       api.renderAll(); api.toast("守信履约，威望 +1，开始临朝。");
     });
@@ -118,7 +126,7 @@ Sophrosyne.Events = (function () {
         const modern = (row.querySelector(".se-modern") || {}).value || "";
         entries.push({ title, note, effects, classical, modern });
       });
-      Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalVerdicts: draft.subGoalVerdicts });
+      Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalVerdicts: draft.subGoalVerdicts, policyTitles: draft.policyTitles });
       api.pendingSettlement = null;
       $("#settle-modal").hidden = true; api.renderAll(); api.toast("岁末结算完成。");
     });
@@ -260,6 +268,17 @@ Sophrosyne.Events = (function () {
     $("#llm-key-clear").addEventListener("click", () => {
       api.storedLlmKey = ""; $("#set-llm-key").value = ""; $("#set-llm-key").placeholder = "sk-...";
       api.toast("已清除已存密钥（点「保存」后生效）。");
+    });
+    $("#llm-test").addEventListener("click", async () => {
+      const btn = $("#llm-test"), out = $("#llm-test-result");
+      btn.disabled = true; btn.textContent = "测试中…"; out.textContent = "正在连接模型…";
+      try {
+        const r = await LLM.testConnection(S());
+        out.textContent = (r.ok ? "✓ " : "✗ ") + r.message;
+      } catch (e) {
+        out.textContent = "✗ " + (e && e.message ? e.message : String(e));
+      }
+      btn.disabled = false; btn.textContent = "测试接通";
     });
     $("#reset-btn").addEventListener("click", () => {
       if (!confirm("确定完全重置所有数据？")) return;

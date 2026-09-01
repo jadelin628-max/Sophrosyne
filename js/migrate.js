@@ -25,6 +25,7 @@ Sophrosyne.Migrate = (function () {
           const r = defaultRule();
           for (const k of Object.keys(r)) if (p.rule[k] === undefined) p.rule[k] = r[k];
         }
+        if (p.title === undefined) p.title = "";   // 典章制度风味化名（结算时由大模型回填）
       }
     }
     // v6 → v7：金口玉言链（chains.oath）与目标风味化字段缺省补齐（缺失即回默认，运行时按 g.title||g.name 兜底）

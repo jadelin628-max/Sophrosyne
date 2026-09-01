@@ -170,12 +170,13 @@ Sophrosyne.Engine = (function () {
     return { settled: true, llmFailed: llmFailed ? llmFailed.message : null };
   }
 
-  // 提案式结算：返回待确认草案（LLM 或本地确定性规则）；LLM 失败回退本地
+  // 提案式结算：返回待确认草案（LLM 或本地确定性规则）；LLM 失败回退本地并携带失败原因
   async function proposeSettlement(state, useLLM) {
     const tasks = state.reign.todayTasks.slice();
+    let llmError = null;
     if (useLLM) {
       try { return { draft: await Sophrosyne.LLM.proposeSettlement(state, tasks), source: "llm" }; }
-      catch (e) { /* 回退本地规则 */ }
+      catch (e) { llmError = (e && e.message) || String(e); }
     }
     const entries = tasks.map(t => {
       const sc = Scenes.get(t.sceneId);
@@ -189,7 +190,7 @@ Sophrosyne.Engine = (function () {
         modern: "完成" + sc.name + (t.realTask ? "（" + t.realTask + "）" : "") + "，国力影响：" + describeEffects(eff) + "。"
       };
     }).filter(Boolean);
-    return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalVerdicts: [] }, source: "fallback" };
+    return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalVerdicts: [], policyTitles: [] }, source: "fallback", error: llmError };
   }
   // 确认后写入存档：移除待结算占位、逐项封顶 + 应用国力 + 双语起居录 + 国策风味名/评述 + 压缩摘要
   function applySettlementDraft(state, draft) {
@@ -213,11 +214,12 @@ Sophrosyne.Engine = (function () {
       if (Object.keys(capped).length) Metrics.applyEffects(state.reign.metrics, scaleEffects(capped, factor));
       logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "");
     }
-    // 国策风味化名 + 大目标/阶段目标评述
-    const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgv = (draft && draft.subGoalVerdicts) || [];
+    // 国策风味化名 + 大目标/阶段目标评述 + 典章制度风味化名
+    const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgv = (draft && draft.subGoalVerdicts) || [], pt = (draft && draft.policyTitles) || [];
     for (const it of gt) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.title && !g.title) g.title = it.title; }
     for (const it of gv) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.verdict) g.verdict = it.verdict; }
     for (const it of sgv) { for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg && it.verdict) sg.verdict = it.verdict; } }
+    for (const it of pt) { const p = state.policies.find(x => x.id === it.policyId); if (p && it.title && !p.title) p.title = it.title; }
     checkHeirBirth(state, loveCount);
     state.reign.todayTasks = [];
     state.reign.digest = compressRecords(state.log, 8, 600);
@@ -315,7 +317,7 @@ Sophrosyne.Engine = (function () {
     const ap = state.activeAppointment || state.chains.appointment.active;
     return ap && Date.now() >= ap.dueAt;
   }
-  function fulfillAppointment(state) {
+  function fulfillAppointment(state, realTask) {
     const ap = state.activeAppointment || state.chains.appointment.active;
     if (!ap) return null;
     if (ap.status === "overdue" || appointmentDue(state)) return { blocked: true, reason: "预约已逾期，请确认失信。" };
@@ -327,7 +329,7 @@ Sophrosyne.Engine = (function () {
     state.activeAppointment = null; state.chains.appointment.active = null;
     log(state, "守信履约，威望 +1（现 " + state.reign.attributes.prestige + "）。");
     Store.save(state);
-    return startFocus(state, ap.sceneId, "main", "");
+    return startFocus(state, ap.sceneId, "main", realTask || "");
   }
   function expireAppointment(state, now) {
     const ap = state.activeAppointment || state.chains.appointment.active;
@@ -391,7 +393,7 @@ Sophrosyne.Engine = (function () {
   function addPolicy(state, data) {
     if (!policyAddAllowed(state)) return { ok: false, reason: "今日已颁行过制度，明日再议。" };
     const p = {
-      id: uid(), name: data.name, group: data.group || "", flavor: data.flavor || "",
+      id: uid(), name: data.name, title: "", group: data.group || "", flavor: data.flavor || "",
       parentId: data.parentId || null, status: "active",
       solidity: 0, solidityCap: 100, survivalDays: 0, collapseCount: 0,
       level: 0, revive: 0, strengthened: false, createdAt: todayStr(),

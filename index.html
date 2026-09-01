@@ -249,6 +249,18 @@
       <button class="back-btn" data-back>← 回宫</button>
       <div class="view-hero" data-venue-hero="ningshougong"></div>
     </section>
+
+    <!-- 毓庆宫：内廷 · 皇子事务 -->
+    <section id="view-yuqinggong" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="yuqinggong"></div>
+    </section>
+
+    <!-- 咸福宫：内廷 · 公主事务 -->
+    <section id="view-xianfugong" class="view palace-view">
+      <button class="back-btn" data-back>← 回宫</button>
+      <div class="view-hero" data-venue-hero="xianfugong"></div>
+    </section>
   </main>
 
   <div id="verdict-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="verdict-modal-title" hidden>
@@ -316,6 +328,14 @@
       <p class="context">预约已履约，即将开始临朝；请填写本次政务的真实名称（可留空）。</p>
       <label class="field"><span>政务名称（真实任务）</span><input id="task-name" type="text" placeholder="如：背英语单词200个" /></label>
       <div class="row"><button id="task-cancel" class="btn ghost">取消</button><button id="task-confirm" class="btn primary">开始临朝</button></div>
+    </div>
+  </div>
+
+  <div id="heir-name-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="heir-name-modal-title" hidden>
+    <div class="modal-card"><h2 id="heir-name-modal-title">赐名</h2>
+      <p class="context">为子嗣取一个名字。</p>
+      <label class="field"><span>名字</span><input id="heir-name" type="text" placeholder="如：承乾 / 静姝" /></label>
+      <div class="row"><button id="heir-name-cancel" class="btn ghost">取消</button><button id="heir-name-save" class="btn primary">赐名</button></div>
     </div>
   </div>
 

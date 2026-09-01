@@ -29,10 +29,10 @@ Sophrosyne.LLM = (function () {
       "请把【今日真实事务】折算为皇帝这一年（可分配到正月…腊月）的具体政务，并做如下四件事：",
       "1) 每项事务给一条条目：title（风味化标题）、effects（国力增减，键只能取自【可选指标键】）、note（一句史官评语）、classical（古代起居录体，如「帝御乾清宫，召见群臣，决狱数十」）、modern（同一件事的白话翻译，说明真实行为与数值影响的关系）；",
       "2) 对每个国策：goalId 对应【国策列表】，若国策尚无风味化名，给出古风 title（如「考研上岸」→「勤学兴教」）；再给 verdict（本年该国策推进情况的 1-2 句评述）；",
-      "3) 对每个已推进或完成的阶段目标：给 subGoalId 对应的 verdict（1 句评述）；",
+      "3) 对每个已推进或完成的阶段目标：给 subGoalId 对应的古风 title（风味化阶段目标名，如「每日背单词」→「日课不辍」）与 verdict（1 句评述）；",
       "4) 对每个在行制度：policyId 对应【在行制度列表】，给一个古风的制度名 title（如「子时后不碰手机」→「宵禁锁钥」，2-6 字，雅正精炼）。",
       "只输出如下 JSON（无其他文字）：",
-      '{"entries":[{"month":"正月","title":"帝御门听政，批阅奏章","effects":{"treasury":1000,"order":2},"note":"一句史官评语","classical":"古体起居录","modern":"白话翻译"}],"goalTitles":[{"goalId":"…","title":"古风国策名"}],"goalVerdicts":[{"goalId":"…","verdict":"评述"}],"subGoalVerdicts":[{"subGoalId":"…","verdict":"评述"}],"policyTitles":[{"policyId":"…","title":"古风制度名"}]}',
+      '{"entries":[{"month":"正月","title":"帝御门听政，批阅奏章","effects":{"treasury":1000,"order":2},"note":"一句史官评语","classical":"古体起居录","modern":"白话翻译"}],"goalTitles":[{"goalId":"…","title":"古风国策名"}],"goalVerdicts":[{"goalId":"…","verdict":"评述"}],"subGoalTitles":[{"subGoalId":"…","title":"古风阶段目标名"}],"subGoalVerdicts":[{"subGoalId":"…","verdict":"评述"}],"policyTitles":[{"policyId":"…","title":"古风制度名"}]}',
     ].join("\n"),
 
     posthumous: [
@@ -252,6 +252,7 @@ Sophrosyne.LLM = (function () {
       entries,
       goalTitles: cleanIdList(obj.goalTitles, "goalId", "title", 20),
       goalVerdicts: cleanIdList(obj.goalVerdicts, "goalId", "verdict", 20),
+      subGoalTitles: cleanIdList(obj.subGoalTitles, "subGoalId", "title", 40),
       subGoalVerdicts: cleanIdList(obj.subGoalVerdicts, "subGoalId", "verdict", 40),
       policyTitles: cleanIdList(obj.policyTitles, "policyId", "title", 30),
     };

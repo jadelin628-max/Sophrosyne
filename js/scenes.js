@@ -45,7 +45,11 @@ Sophrosyne.Scenes = (function () {
     { id: "stroll",     domain: "内廷", loc: "yuhuayuan",  name: "游园理政", gov: "散步、放空、沉思", appointment: "更衣游园", defaultEffects: { order: 1 }, attrs: ["composure"], primary: "composure" },
     { id: "taste",      domain: "内廷", loc: "yushanfang", name: "亲尝百膳", gov: "备餐、饮食、觉察", appointment: "传膳试味", defaultEffects: { population: 100, support: 1 }, attrs: ["health"], primary: "health" },
     { id: "thrift",     domain: "内廷", loc: "neiweufu",   name: "节流开源", gov: "理财、预算、记账", appointment: "核账清册", defaultEffects: { treasury: 200, corruption: -1 }, attrs: ["energy", "intellect"], primary: "intellect" },
-    { id: "teach",      domain: "内廷", loc: "shangshufang", name: "教习皇子", gov: "教养、辅导、答疑", appointment: "备书开讲", defaultEffects: { xiuCai: 10 }, attrs: ["intellect", "charm"], primary: "intellect" },
+    { id: "teach",      domain: "内廷", loc: "yuqinggong", name: "教习皇子", gov: "教养、辅导、答疑", appointment: "备书开讲", defaultEffects: { xiuCai: 10 }, attrs: ["intellect", "charm"], primary: "intellect" },
+    { id: "prince_martial", domain: "内廷", loc: "yuqinggong", name: "骑射演武", gov: "教皇子习武、骑射、强身", appointment: "更衣备马", defaultEffects: { training: 1, army: 50 }, attrs: ["health", "energy"], primary: "energy" },
+    { id: "princess_study", domain: "内廷", loc: "xianfugong", name: "教习公主", gov: "教公主读书、明理、知礼", appointment: "备书开讲", defaultEffects: { xiuCai: 10 }, attrs: ["intellect", "charm"], primary: "intellect" },
+    { id: "princess_art",  domain: "内廷", loc: "xianfugong", name: "女红针黹", gov: "刺绣、针线、手工女红", appointment: "备线理针", defaultEffects: { support: 1 }, attrs: ["talent", "composure"], primary: "talent" },
+    { id: "princess_music", domain: "内廷", loc: "xianfugong", name: "抚琴品画", gov: "琴棋书画、才艺涵养", appointment: "调弦研墨", defaultEffects: { xiuCai: 5, support: 1 }, attrs: ["talent", "composure"], primary: "talent" },
   ];
 
   function get(id) { return SCENES.find(s => s.id === id) || null; }

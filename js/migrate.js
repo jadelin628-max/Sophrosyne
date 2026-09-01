@@ -37,9 +37,11 @@ Sophrosyne.Migrate = (function () {
         if (!g || typeof g !== "object") continue;
         if (g.title === undefined) g.title = "";
         if (g.verdict === undefined) g.verdict = "";
-        for (const sg of (g.subGoals || [])) if (sg && sg.verdict === undefined) sg.verdict = "";
+        for (const sg of (g.subGoals || [])) { if (sg && sg.verdict === undefined) sg.verdict = ""; if (sg && sg.title === undefined) sg.title = ""; }
       }
     }
+    // 旧子嗣已用默认名命名，补 named 标记
+    if (Array.isArray(s.heirs)) for (const h of s.heirs) if (h && h.named === undefined) h.named = true;
     s.version = 7;
     return s;
   }

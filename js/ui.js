@@ -11,6 +11,7 @@ Sophrosyne.UI = (function () {
   let selectedChain = "main";
   let verdictTarget = null;
   let subGoalGoalId = null;
+  let renameHeirId = null;
   let pendingSettlement = null;
   let storedLlmKey = "";   // 打开设置时读取已存 Key，用于脱敏展示与「留空不覆盖」
   // 开发开关：URL 带 ?dev 或 localStorage sophrosyne.dev=1 时显示坐标网格/轴标
@@ -79,6 +80,8 @@ Sophrosyne.UI = (function () {
     shenwumen:    { name: "神武门", sub: "北门 · 巡阅" },
     cininggong:   { name: "慈宁宫", sub: "内廷 · 奉养" },
     ningshougong: { name: "宁寿宫", sub: "内廷 · 颐养" },
+    yuqinggong:   { name: "毓庆宫", sub: "内廷 · 皇子事务" },
+    xianfugong:   { name: "咸福宫", sub: "内廷 · 公主事务" },
   };
   const VENUE_ACTIONS = {
     qianqinggong: [ { label: "报备突发事件", act: "event" }, { label: "定国策", act: "goal" } ],
@@ -122,7 +125,7 @@ Sophrosyne.UI = (function () {
     { x: 185, y: 240, s: 42, l: "永寿宫" },
     { x: 228, y: 240, s: 42, l: "翊坤宫" },
     { x: 185, y: 314, s: 42, l: "储秀宫" },
-    { x: 228, y: 314, s: 42, l: "咸福宫" },
+    { x: 228, y: 314, s: 42, l: "咸福宫", v: "xianfugong" },
     { x: 185, y: 388, s: 42, l: "长春宫" },
     { x: 228, y: 388, s: 42, l: "太极殿" },
     { x: 218, y: 436, s: 46, l: "养心殿", v: "chain" },
@@ -142,6 +145,7 @@ Sophrosyne.UI = (function () {
     { x: 412, y: 388, s: 42, l: "永和宫" },
     { x: 455, y: 388, s: 42, l: "延禧宫" },
     { x: 418, y: 426, s: 42, l: "奉先殿", v: "history" },
+    { x: 418, y: 560, s: 38, l: "毓庆宫", v: "yuqinggong" },
     { x: 480, y: 496, s: 38, l: "上书房", v: "shangshufang" },
     { x: 400, y: 590, s: 38, l: "景运门" },
     { x: 512, y: 302, s: 36, l: "畅音阁", v: "changyinge" },
@@ -360,10 +364,12 @@ Sophrosyne.UI = (function () {
   function renderHeirs(el) {
     if (!el) return;
     if (!state.heirs.length) { el.innerHTML = '<p class="hint">尚无子嗣（琴瑟和鸣等事务可加速诞育）。</p>'; return; }
-    el.innerHTML = state.heirs.map(h =>
-      '<div class="goal-row"><div class="goal-name"><b>' + escapeHtml(h.name) + '</b> <span class="hint">' + (h.gender === "male" ? "皇子" : "公主") + ' · ' + h.age + ' 岁 · 智' + h.attributes.intellect + '</span></div>' +
-      '<span class="goal-actions"><button data-hact="train" data-id="' + escapeHtml(h.id) + '">培养</button></span></div>'
-    ).join("");
+    el.innerHTML = state.heirs.map(h => {
+      const attrs = Scenes.ATTR_KEYS.map(k => Scenes.ATTR_NAMES[k] + " " + h.attributes[k]).join(" · ");
+      const nameTxt = (h.named === false ? escapeHtml(h.name) + "（待命名）" : escapeHtml(h.name));
+      return '<div class="goal-row"><div class="goal-name"><b>' + nameTxt + '</b> <span class="hint">' + (h.gender === "male" ? "皇子" : "公主") + ' · ' + h.age + ' 岁</span><div class="hint">' + escapeHtml(attrs) + '</div></div>' +
+        '<span class="goal-actions"><button data-hact="rename" data-id="' + escapeHtml(h.id) + '">' + (h.named === false ? "命名" : "改名") + '</button><button data-hact="train" data-id="' + escapeHtml(h.id) + '">培养</button></span></div>';
+    }).join("");
   }
   function renderEventStatus(el) {
     el.innerHTML = '<p class="hint">突发事件报备时，逐项对受影响制度裁决（判失守 / 立为成例）。</p>';
@@ -377,7 +383,7 @@ Sophrosyne.UI = (function () {
           const ok = Engine.criterionMet(state, c);
           return '<div class="subgoal-crit' + (ok ? " ok" : "") + '">' + (ok ? "✓" : "·") + ' ' + escapeHtml(Engine.describeCriterion(state, c)) + '</div>';
         }).join("");
-        return '<div class="subgoal' + (sg.done ? " done" : "") + '"><b>' + (sg.done ? "✓" : "·") + ' ' + escapeHtml(sg.name) + '</b>' + (sg.verdict ? '<div class="hint">' + escapeHtml(sg.verdict) + '</div>' : '') + crits + '</div>';
+        return '<div class="subgoal' + (sg.done ? " done" : "") + '"><b>' + (sg.done ? "✓" : "·") + ' ' + escapeHtml(sg.title || sg.name) + '</b>' + (sg.title && sg.title !== sg.name ? ' <span class="hint">（' + escapeHtml(sg.name) + '）</span>' : '') + (sg.verdict ? '<div class="hint">' + escapeHtml(sg.verdict) + '</div>' : '') + crits + '</div>';
       }).join("");
       const title = g.title || g.name;
       const txt = g.status === "done" ? "已成" : (g.status === "failed" ? "未竟" : "进行中");
@@ -655,6 +661,11 @@ Sophrosyne.UI = (function () {
       const g = state.goals.find(x => x.id === it.goalId);
       if (g && it.verdict) lines.push("国策评述：" + it.verdict);
     }
+    for (const it of (draft.subGoalTitles || [])) {
+      let nm = "";
+      for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg) { nm = sg.title || sg.name; break; } }
+      if (it.title) lines.push("阶段目标「" + nm + "」风味名 → 「" + it.title + "」");
+    }
     for (const it of (draft.subGoalVerdicts || [])) {
       let nm = "";
       for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg) { nm = sg.name; break; } }
@@ -748,6 +759,12 @@ Sophrosyne.UI = (function () {
     $("#subgoal-criteria").innerHTML = criterionRowHtml("focus-total");
     $("#subgoal-modal").hidden = false;
   }
+  function openHeirName(id) {
+    const h = state.heirs.find(x => x.id === id);
+    renameHeirId = id;
+    $("#heir-name").value = h ? h.name : "";
+    $("#heir-name-modal").hidden = false;
+  }
   function openVerdict(target, context) {
     verdictTarget = target; $("#verdict-context").textContent = context; $("#verdict-text").value = ""; $("#verdict-modal").hidden = false;
   }
@@ -774,7 +791,7 @@ Sophrosyne.UI = (function () {
     renderAll, toast, openView, backToPalace,
     updateVenueSelection, startFromVenue, revealPanels, handleVenueAction,
     doSettle, renderSettleEntries,
-    openVerdict, closeVerdict, openSubGoalModal,
+    openVerdict, closeVerdict, openSubGoalModal, openHeirName,
     criterionRowHtml, criterionArgsHtml, collectCriteria, llmConfigured,
     get selectedSceneId() { return selectedSceneId; },
     set selectedSceneId(v) { selectedSceneId = v; },
@@ -784,6 +801,8 @@ Sophrosyne.UI = (function () {
     set verdictTarget(v) { verdictTarget = v; },
     get subGoalGoalId() { return subGoalGoalId; },
     set subGoalGoalId(v) { subGoalGoalId = v; },
+    get renameHeirId() { return renameHeirId; },
+    set renameHeirId(v) { renameHeirId = v; },
     get pendingSettlement() { return pendingSettlement; },
     set pendingSettlement(v) { pendingSettlement = v; },
     get storedLlmKey() { return storedLlmKey; },

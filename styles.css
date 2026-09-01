@@ -360,6 +360,8 @@ body {
 #view-shenwumen  { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_shenwumen.webp"); }
 #view-cininggong { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_cininggong.webp"); }
 #view-ningshougong { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_ningshougong.webp"); }
+#view-yuqinggong { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_wenyuange.webp"); }
+#view-xianfugong { background-image: linear-gradient(rgba(20,14,9,0.35), rgba(20,14,9,0.62)), url("assets/generated/interior_kunninggong.webp"); }
 .view-hero { margin-bottom: 10px; }
 .hero-content h2 { color: var(--gold); font-size: 24px; letter-spacing: 3px; text-shadow: 0 2px 8px rgba(0,0,0,0.95); margin: 0 0 6px; }
 .hero-sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }

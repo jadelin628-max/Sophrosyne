@@ -54,6 +54,19 @@ console.log("[4] 典章制度风味化名回填");
   assert(p.title === "宵禁锁钥", "制度风味化名写入");
 }
 
+console.log("[5] 阶段目标风味名与评述回填 + 皇子命名");
+{
+  const s = freshState();
+  const g = E.addGoal(s, { name: "考研上岸", flavor: "" }).goal;
+  const sg = E.addSubGoal(s, g.id, { name: "每日背单词", criteria: [{ type: "metric", key: "support", target: 0 }] }).subGoal;
+  assert(sg.title === "", "新建阶段目标 title 为空");
+  E.applySettlementDraft(s, { entries: [], subGoalTitles: [{ subGoalId: sg.id, title: "日课不辍" }], subGoalVerdicts: [{ subGoalId: sg.id, verdict: "尚未践行" }] });
+  assert(sg.title === "日课不辍" && sg.verdict === "尚未践行", "阶段目标风味名与评述写入");
+  const h = E.createHeir(s, s.reign.attributes);
+  assert(h.named === false, "新皇子默认未命名");
+  assert(E.renameHeir(s, h.id, "承乾").ok && h.name === "承乾" && h.named === true, "皇子可赐名");
+}
+
 if (failed) { console.error("SETTLE-V2 FAIL — " + failed + " 项未过"); process.exit(1); }
 console.log("SETTLE-V2 OK — 双语起居录/国策风味化/摘要压缩通过");
 

@@ -190,7 +190,7 @@ Sophrosyne.Engine = (function () {
         modern: "完成" + sc.name + (t.realTask ? "（" + t.realTask + "）" : "") + "，国力影响：" + describeEffects(eff) + "。"
       };
     }).filter(Boolean);
-    return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalVerdicts: [], policyTitles: [] }, source: "fallback", error: llmError };
+    return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalTitles: [], subGoalVerdicts: [], policyTitles: [] }, source: "fallback", error: llmError };
   }
   // 确认后写入存档：移除待结算占位、逐项封顶 + 应用国力 + 双语起居录 + 国策风味名/评述 + 压缩摘要
   function applySettlementDraft(state, draft) {
@@ -214,11 +214,12 @@ Sophrosyne.Engine = (function () {
       if (Object.keys(capped).length) Metrics.applyEffects(state.reign.metrics, scaleEffects(capped, factor));
       logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "");
     }
-    // 国策风味化名 + 大目标/阶段目标评述 + 典章制度风味化名
-    const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgv = (draft && draft.subGoalVerdicts) || [], pt = (draft && draft.policyTitles) || [];
+    // 国策风味化名 + 大目标/阶段目标评述/风味名 + 典章制度风味化名
+    const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgt = (draft && draft.subGoalTitles) || [], sgv = (draft && draft.subGoalVerdicts) || [], pt = (draft && draft.policyTitles) || [];
     for (const it of gt) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.title && !g.title) g.title = it.title; }
     for (const it of gv) { const g = state.goals.find(x => x.id === it.goalId); if (g && it.verdict) g.verdict = it.verdict; }
     for (const it of sgv) { for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg && it.verdict) sg.verdict = it.verdict; } }
+    for (const it of sgt) { for (const g of state.goals) { const sg = (g.subGoals || []).find(x => x.id === it.subGoalId); if (sg && it.title && !sg.title) sg.title = it.title; } }
     for (const it of pt) { const p = state.policies.find(x => x.id === it.policyId); if (p && it.title && !p.title) p.title = it.title; }
     checkHeirBirth(state, loveCount);
     state.reign.todayTasks = [];
@@ -374,9 +375,19 @@ Sophrosyne.Engine = (function () {
     for (const k of Scenes.ATTR_KEYS) attrs[k] = clamp(20 + Math.round((parentAttrs[k] || 50) * 0.5 + Math.random() * 30), 0, 100);
     const gender = Math.random() < 0.5 ? "male" : "female";
     const names = gender === "male" ? MALE_NAMES : FEMALE_NAMES;
-    const h = { id: uid(), name: names[Math.floor(Math.random() * names.length)], gender, age: 0, attributes: attrs, birthDate: todayStr() };
+    const h = { id: uid(), name: names[Math.floor(Math.random() * names.length)], named: false, gender, age: 0, attributes: attrs, birthDate: todayStr() };
     state.heirs.push(h);
     return h;
+  }
+  function renameHeir(state, heirId, name) {
+    const h = state.heirs.find(x => x.id === heirId);
+    if (!h) return { ok: false, reason: "子嗣不存在。" };
+    const nm = (name || "").trim();
+    if (!nm) return { ok: false, reason: "请填写名字。" };
+    h.name = nm; h.named = true;
+    log(state, "为" + (h.gender === "male" ? "皇子" : "公主") + "赐名「" + nm + "」。");
+    Store.save(state);
+    return { ok: true };
   }
   function trainHeir(state, heirId) {
     if (state.meta.lastTrainDate === todayStr()) return { ok: false, reason: "今日已培养过子嗣。" };
@@ -494,7 +505,7 @@ Sophrosyne.Engine = (function () {
     const g = state.goals.find(x => x.id === goalId);
     if (!g) return { ok: false, reason: "大目标不存在。" };
     if (!criteria || !criteria.length) return { ok: false, reason: "至少选择一条评判标准。" };
-    const sg = { id: uid(), name, flavor: flavor || "", criteria, progress: 0, done: false };
+    const sg = { id: uid(), name, title: "", flavor: flavor || "", verdict: "", criteria, progress: 0, done: false };
     g.subGoals.push(sg);
     log(state, "分解阶段目标：「" + name + "」（" + criteria.map(c => describeCriterion(state, c)).join("、") + "）。");
     Store.save(state);
@@ -646,7 +657,7 @@ Sophrosyne.Engine = (function () {
     scheduleAppointment, appointmentDue, expireAppointment, fulfillAppointment, missAppointment, countOath, advanceTimers,
     settleYear, proposeSettlement, applySettlementDraft, fallbackSettle, applySettlement, yearlyAdvance,
     addPolicy, policyAddAllowed, collapsePolicy, rescuePolicy, upgradePolicy, strengthenPolicy,
-    adjudicateEvent, checkHeirBirth, createHeir, trainHeir,
+    adjudicateEvent, checkHeirBirth, createHeir, renameHeir, trainHeir,
     addGoal, addSubGoal, resolveGoal, evaluateSubGoals, criterionMet, describeCriterion, countSubGoalsDone,
     abdicate, log, logFlavored, compressRecords, todayStr, daysBetween, ERA_NAMES
   };

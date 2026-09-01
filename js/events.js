@@ -94,7 +94,14 @@ Sophrosyne.Events = (function () {
 
     $("#heir-list").addEventListener("click", (e) => {
       const btn = e.target.closest("[data-hact]"); if (!btn) return;
+      if (btn.dataset.hact === "rename") { api.openHeirName(btn.dataset.id); return; }
       const r = Engine.trainHeir(S(), btn.dataset.id); api.renderAll(); api.toast(r.ok ? "已培养。" : r.reason);
+    });
+    $("#heir-name-cancel").addEventListener("click", () => $("#heir-name-modal").hidden = true);
+    $("#heir-name-save").addEventListener("click", () => {
+      const r = Engine.renameHeir(S(), api.renameHeirId, $("#heir-name").value.trim());
+      if (!r.ok) { api.toast(r.reason); return; }
+      $("#heir-name-modal").hidden = true; api.renderAll(); api.toast("已赐名。");
     });
 
     $("#event-cancel").addEventListener("click", () => $("#event-modal").hidden = true);
@@ -126,7 +133,7 @@ Sophrosyne.Events = (function () {
         const modern = (row.querySelector(".se-modern") || {}).value || "";
         entries.push({ title, note, effects, classical, modern });
       });
-      Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalVerdicts: draft.subGoalVerdicts, policyTitles: draft.policyTitles });
+      Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalTitles: draft.subGoalTitles, subGoalVerdicts: draft.subGoalVerdicts, policyTitles: draft.policyTitles });
       api.pendingSettlement = null;
       $("#settle-modal").hidden = true; api.renderAll(); api.toast("岁末结算完成。");
     });
@@ -285,8 +292,13 @@ Sophrosyne.Events = (function () {
       btn.disabled = false; btn.textContent = "测试接通";
     });
     $("#reset-btn").addEventListener("click", () => {
-      if (!confirm("确定完全重置所有数据？")) return;
-      api.setState(Engine.tick(Store.reset())); $("#settings-modal").hidden = true; api.renderAll(); api.toast("已重置。");
+      if (!confirm("确定完全重置所有数据（将保留当前设置，便于测试）？")) return;
+      const keep = JSON.parse(JSON.stringify(S().settings));
+      const fresh = Store.reset();
+      fresh.settings = keep;
+      Store.save(fresh);
+      api.setState(Engine.tick(fresh));
+      $("#settings-modal").hidden = true; api.renderAll(); api.toast("已重置（设置已保留）。");
     });
     $("#clear-cache-btn").addEventListener("click", async () => {
       if (!confirm("将清空离线缓存并刷新以加载最新版本（不会删除你的存档数据）。继续？")) return;

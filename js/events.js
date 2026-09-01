@@ -288,6 +288,22 @@ Sophrosyne.Events = (function () {
       if (!confirm("确定完全重置所有数据？")) return;
       api.setState(Engine.tick(Store.reset())); $("#settings-modal").hidden = true; api.renderAll(); api.toast("已重置。");
     });
+    $("#clear-cache-btn").addEventListener("click", async () => {
+      if (!confirm("将清空离线缓存并刷新以加载最新版本（不会删除你的存档数据）。继续？")) return;
+      try {
+        if (window.caches && window.caches.keys) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) { /* 忽略 */ }
+      try {
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+      } catch (e) { /* 忽略 */ }
+      location.reload();
+    });
     $("#export-btn").addEventListener("click", () => {
       const dump = JSON.parse(JSON.stringify(S()));
       if (dump.settings && dump.settings.llm) delete dump.settings.llm.apiKey; // 导出脱敏，备份文件不含密钥

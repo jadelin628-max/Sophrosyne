@@ -131,7 +131,8 @@ Sophrosyne.Events = (function () {
         });
         const classical = (row.querySelector(".se-classical") || {}).value || "";
         const modern = (row.querySelector(".se-modern") || {}).value || "";
-        entries.push({ title, note, effects, classical, modern });
+        const month = (row.querySelector(".se-month") || {}).value || "";
+        entries.push({ month, title, note, effects, classical, modern });
       });
       Engine.applySettlementDraft(S(), { entries, goalTitles: draft.goalTitles, goalVerdicts: draft.goalVerdicts, subGoalTitles: draft.subGoalTitles, subGoalVerdicts: draft.subGoalVerdicts, policyTitles: draft.policyTitles });
       api.pendingSettlement = null;

@@ -468,7 +468,8 @@ Sophrosyne.UI = (function () {
   }
   function logItemHtml(e) {
     const modern = e.modern ? '<div class="log-modern">' + escapeHtml(e.modern) + '</div>' : '';
-    return '<li><span class="k">' + (e.year ? "第" + e.year + "年 " : "") + e.date + '</span><span class="v">' + escapeHtml(e.text) + modern + '</span></li>';
+    const month = e.month ? '<span class="log-month">' + escapeHtml(e.month) + '</span>' : '';
+    return '<li><span class="k">' + (e.year ? "第" + e.year + "年 " : "") + e.date + '</span><span class="v">' + month + escapeHtml(e.text) + modern + '</span></li>';
   }
   function renderLog(entries) {
     if (!entries.length) return '<p class="hint">起居注尚空。</p>';
@@ -689,11 +690,13 @@ Sophrosyne.UI = (function () {
     const entries = (r.draft && r.draft.entries) || [];
     el.innerHTML = entries.map((e, i) =>
       '<div class="settle-entry">' +
+        (e.month ? '<div class="se-month">' + escapeHtml(e.month) + '</div>' : '') +
         '<input class="se-title" value="' + escapeHtml(e.title || "") + '" placeholder="标题">' +
         '<input class="se-note" value="' + escapeHtml(e.note || "") + '" placeholder="评语">' +
         '<input class="se-effects" value="' + escapeHtml(effectsToText(e.effects)) + '" placeholder="指标:数值（如 treasury:1000,support:2）">' +
         (e.classical ? '<div class="se-preview">' + escapeHtml(e.classical) + '</div>' : '') +
         (e.modern ? '<div class="se-preview log-modern">' + escapeHtml(e.modern) + '</div>' : '') +
+        '<input type="hidden" class="se-month" value="' + escapeHtml(e.month || "") + '">' +
         '<input type="hidden" class="se-classical" value="' + escapeHtml(e.classical || "") + '">' +
         '<input type="hidden" class="se-modern" value="' + escapeHtml(e.modern || "") + '">' +
       '</div>'

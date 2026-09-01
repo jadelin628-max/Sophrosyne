@@ -30,7 +30,7 @@ console.log("[1] sanitizeDraft 严格校验（合法键/数值封顶/长度/条�
   assert(d.entries[0].effects.treasury === 100000, "无上限指标 999999 封顶为 100000");
   assert(!("bogus" in d.entries[0].effects) && !("corruption" in d.entries[0].effects), "非法键/非数值被丢弃");
   assert(d.entries[2].effects.order === -15, "0-100 指标负向封顶为 -15");
-  assert(d.entries.length <= 24, "条目数封顶为 24");
+  assert(d.entries.length <= 30, "条目数封顶为 30");
   assert(LLM.sanitizeDraft(null) === null && LLM.sanitizeDraft({ entries: "x" }) === null, "非法结构返回 null");
 }
 

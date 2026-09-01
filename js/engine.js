@@ -22,12 +22,15 @@ Sophrosyne.Engine = (function () {
     if (opts && opts.pending) entry.pending = true;
     if (opts && opts.classical != null) entry.classical = opts.classical;
     if (opts && opts.modern != null) entry.modern = opts.modern;
+    if (opts && opts.month != null) entry.month = opts.month;
     state.log.unshift(entry);
     if (state.log.length > 500) state.log.length = 500;
   }
-  // 风味化起居录条目：text=classical（古代记录体），modern=白话翻译
-  function logFlavored(state, classical, modern) {
-    log(state, classical || "政务", { classical: classical, modern: modern });
+  // 风味化起居录条目：text=classical（古代记录体），modern=白话翻译，month=虚构月份
+  function logFlavored(state, classical, modern, month) {
+    const opts = { classical: classical, modern: modern };
+    if (month) opts.month = month;
+    log(state, classical || "政务", opts);
   }
   // 压缩起居录/实录为有界摘要，供下一次 LLM 提示词（确定性本地压缩，不额外消耗 token）
   function compressRecords(entries, n, maxChars) {
@@ -190,6 +193,15 @@ Sophrosyne.Engine = (function () {
         modern: "完成" + sc.name + (t.realTask ? "（" + t.realTask + "）" : "") + "，国力影响：" + describeEffects(eff) + "。"
       };
     }).filter(Boolean);
+    // 无 LLM 时也补上国策/制度的叙事条目（无数值增减）
+    for (const g of state.goals.filter(x => x.status === "active")) {
+      const t = g.title || g.name;
+      entries.push({ title: "国策·" + t, effects: {}, note: "", classical: "是岁，帝定国策「" + t + "」，以图「" + g.name + "」，夙夜不怠。", modern: "本年度持续推进国策「" + g.name + "」。", month: "" });
+    }
+    for (const p of state.policies.filter(x => x.status === "active")) {
+      const t = p.title || p.name;
+      entries.push({ title: "制度·" + t, effects: {}, note: "", classical: "宫中严守「" + t + "」之制，持之以恒。", modern: "制度「" + p.name + "」坚持中。", month: "" });
+    }
     return { draft: { title: "", note: "", entries, goalTitles: [], goalVerdicts: [], subGoalTitles: [], subGoalVerdicts: [], policyTitles: [] }, source: "fallback", error: llmError };
   }
   // 确认后写入存档：移除待结算占位、逐项封顶 + 应用国力 + 双语起居录 + 国策风味名/评述 + 压缩摘要
@@ -212,7 +224,7 @@ Sophrosyne.Engine = (function () {
         }
       }
       if (Object.keys(capped).length) Metrics.applyEffects(state.reign.metrics, scaleEffects(capped, factor));
-      logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "");
+      logFlavored(state, e.classical || e.title || "政务", e.modern || e.note || "", e.month);
     }
     // 国策风味化名 + 大目标/阶段目标评述/风味名 + 典章制度风味化名
     const gt = (draft && draft.goalTitles) || [], gv = (draft && draft.goalVerdicts) || [], sgt = (draft && draft.subGoalTitles) || [], sgv = (draft && draft.subGoalVerdicts) || [], pt = (draft && draft.policyTitles) || [];

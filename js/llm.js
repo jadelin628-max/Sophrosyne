@@ -26,13 +26,18 @@ Sophrosyne.LLM = (function () {
     ].join("\n"),
 
     settle: [
-      "请把【今日真实事务】折算为皇帝这一年（可分配到正月…腊月）的具体政务，并做如下四件事：",
-      "1) 每项事务给一条条目：title（风味化标题）、effects（国力增减，键只能取自【可选指标键】）、note（一句史官评语）、classical（古代起居录体，如「帝御乾清宫，召见群臣，决狱数十」）、modern（同一件事的白话翻译，说明真实行为与数值影响的关系）；",
-      "2) 对每个国策：goalId 对应【国策列表】，若国策尚无风味化名，给出古风 title（如「考研上岸」→「勤学兴教」）；再给 verdict（本年该国策推进情况的 1-2 句评述）；",
-      "3) 对每个已推进或完成的阶段目标：给 subGoalId 对应的古风 title（风味化阶段目标名，如「每日背单词」→「日课不辍」）与 verdict（1 句评述）；",
-      "4) 对每个在行制度：policyId 对应【在行制度列表】，给一个古风的制度名 title（如「子时后不碰手机」→「宵禁锁钥」，2-6 字，雅正精炼）。",
-      "只输出如下 JSON（无其他文字）：",
-      '{"entries":[{"month":"正月","title":"帝御门听政，批阅奏章","effects":{"treasury":1000,"order":2},"note":"一句史官评语","classical":"古体起居录","modern":"白话翻译"}],"goalTitles":[{"goalId":"…","title":"古风国策名"}],"goalVerdicts":[{"goalId":"…","verdict":"评述"}],"subGoalTitles":[{"subGoalId":"…","title":"古风阶段目标名"}],"subGoalVerdicts":[{"subGoalId":"…","verdict":"评述"}],"policyTitles":[{"policyId":"…","title":"古风制度名"}]}',
+      "请为皇帝这一年（正月…腊月）撰写一份完整的「起居录」，把今日的真实事务、国策与制度都风味化为具体的历史事件与故事，合理有趣地反映一位皇帝一年的生活与政务。",
+      "一、生成 10–24 条起居录条目 entries，按月份（正月→腊月）排序，每条含：",
+      "  month（月份）、title（简短标题）、classical（古代起居录体，写成具体事件/故事，如「正月，帝御太和殿，行元日大朝，百官拜贺」）、modern（白话翻译，说明对应的真实行为/含义）、note（一句史官评语，可空）、effects（国力增减，键只能取自【可选指标键】）。",
+      "二、条目必须覆盖四类内容：",
+      "  1) 今日真实政务：每件折为一条具体事件；effects 给与真实事务分量匹配的增减；",
+      "  2) 国策实施：对每个国策，用其风味名写一条今年推进情况的事件（无 effects 或微小）；",
+      "  3) 制度维护：对每个在行制度，用其风味名写一条坚持/守制的事件（无 effects 或微小）；",
+      "  4) 岁时节气与宫廷日常：酌情加入元日大朝、仲春劝农、科举取士、秋狝、冬至祭天、腊月封印等，充实一年。",
+      "三、同时输出（用于更新国策/制度/阶段目标的显示名与评述）：goalTitles（国策风味名）、goalVerdicts（国策评述）、subGoalTitles（阶段目标风味名）、subGoalVerdicts（阶段目标评述）、policyTitles（制度风味名）。",
+      "四、语气雅正精炼、有古风、有趣可读，不堆砌文言；只输出 JSON，无其他文字。",
+      "只输出如下 JSON：",
+      '{"entries":[{"month":"正月","title":"…","classical":"古体起居录","modern":"白话翻译","note":"…","effects":{"treasury":1000,"order":2}}],"goalTitles":[{"goalId":"…","title":"…"}],"goalVerdicts":[{"goalId":"…","verdict":"…"}],"subGoalTitles":[{"subGoalId":"…","title":"…"}],"subGoalVerdicts":[{"subGoalId":"…","verdict":"…"}],"policyTitles":[{"policyId":"…","title":"…"}]}',
     ].join("\n"),
 
     posthumous: [
@@ -199,7 +204,7 @@ Sophrosyne.LLM = (function () {
     return obj.entries.filter(e => e && typeof e === "object" && (e.title || e.note || e.effects));
   }
 
-  const MAX_ENTRIES = 24;
+  const MAX_ENTRIES = 30;
   const MAX_STR = { title: 80, note: 200, classical: 160, modern: 200, verdict: 240 };
   function cleanStr(v, key) {
     if (typeof v !== "string") return "";

@@ -69,6 +69,9 @@ console.log("[5] extractJson 容错（代码围栏 / 截断修复）");
   const r = LLM.extractJson(truncated);
   assert(r && r.entries && r.entries[0].effects.order === 2, "截断 JSON 补齐括号后可解析");
   assert(LLM.extractJson("这不是 JSON") === null, "无 JSON 返回 null");
+  const mixed = '先想：{nested example} 中间……最终结论：{"entries":[{"title":"x"}]} 完毕';
+  const m = LLM.extractJson(mixed);
+  assert(m && m.entries && m.entries[0].title === "x", "思考过程夹带多个 { } 时提取末尾结论 JSON");
 }
 
 if (failed) { console.error("PROMPT FAIL — " + failed + " 项未过"); process.exit(1); }

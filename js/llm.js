@@ -148,11 +148,11 @@ Sophrosyne.LLM = (function () {
     const c = data.choices && data.choices[0] && data.choices[0].message;
     if (!c) throw new Error("模型未返回内容（choices 为空）。");
     const content = (typeof c.content === "string") ? c.content : "";
-    if (!content.trim()) {
-      if (c.reasoning_content) throw new Error("模型只返回了思考过程(reasoning_content)、未给出结论；请调大「最大输出 token」或改用非推理模型。");
-      throw new Error("模型返回了空内容。");
-    }
-    return content.trim();
+    const reasoning = (typeof c.reasoning_content === "string") ? c.reasoning_content : "";
+    // 推理模型：正式结论在 content；若 content 为空，退而用 reasoning_content（结论常在思考末尾）
+    const text = content.trim() || reasoning.trim();
+    if (!text) throw new Error("模型返回了空内容（无 content 也无 reasoning_content）。");
+    return text;
   }
 
   // 括号配平：截断的 JSON 补齐缺失的闭合括号，用于挽救被 max_tokens 截断的输出
@@ -176,10 +176,18 @@ Sophrosyne.LLM = (function () {
     const seg = s.slice(i);
     // 1) 常见情形：完整 JSON（或其后还跟着说明文字）——截到最后一个 } 尝试解析
     const last = seg.lastIndexOf("}");
-    if (last >= 0) { try { return JSON.parse(seg.slice(0, last + 1)); } catch (e) { /* 继续尝试修复 */ } }
+    if (last >= 0) { try { return JSON.parse(seg.slice(0, last + 1)); } catch (e) { /* 继续尝试 */ } }
     // 2) 被截断：补齐缺失括号再解析
     const repaired = balanceJson(seg);
-    if (repaired !== seg) { try { return JSON.parse(repaired); } catch (e) { /* 无法挽救 */ } }
+    if (repaired !== seg) { try { return JSON.parse(repaired); } catch (e) { /* 继续尝试 */ } }
+    // 3) 推理模型：思考过程里可能夹多个 {} 片段，结论 JSON 通常在末尾——从右往左逐个尝试
+    for (let p = s.lastIndexOf("{"); p >= 0; p = s.lastIndexOf("{", p - 1)) {
+      const sub = s.slice(p);
+      const e = sub.lastIndexOf("}");
+      if (e > 0) { try { const o = JSON.parse(sub.slice(0, e + 1)); if (o && typeof o === "object") return o; } catch (err) {} }
+      const b = balanceJson(sub);
+      if (b !== sub) { try { const o = JSON.parse(b); if (o && typeof o === "object") return o; } catch (err) {} }
+    }
     return null;
   }
 

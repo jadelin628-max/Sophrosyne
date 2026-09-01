@@ -200,7 +200,10 @@ Sophrosyne.Events = (function () {
       $("#set-llm-key").value = "";   // 不把真实密钥回填输入框：脱敏展示
       $("#set-llm-key").placeholder = api.storedLlmKey ? "已配置（脱敏 · 留空则保持不变，输入新值可覆盖）" : "sk-...";
       $("#set-llm-model").value = llm.model || "";
-      $("#set-llm-maxtokens").value = llm.maxTokens || 4096;
+      const mt = Number(llm.maxTokens);
+      $("#set-llm-maxtokens").value = (mt > 0) ? mt : 4096;
+      $("#set-llm-maxtokens").disabled = (mt === 0);
+      if ($("#set-llm-unlimited")) $("#set-llm-unlimited").checked = (mt === 0);
       // 展示各类动作的当前生效提示词（覆盖值或默认全文），便于照改
       for (const k of ["system", "settle", "posthumous", "accession"]) {
         $("#set-prompts-" + k).value = LLM.prompt(S(), k);
@@ -247,7 +250,8 @@ Sophrosyne.Events = (function () {
       if ($("#set-dynasty").value.trim()) S().dynasty.name = $("#set-dynasty").value.trim();
       if ($("#set-era").value.trim()) S().reign.eraName = $("#set-era").value.trim();
       const keyInput = $("#set-llm-key").value.trim();
-      const maxTokens = Math.max(512, Math.min(16384, Number($("#set-llm-maxtokens").value) || 4096));
+      const unlimited = !!($("#set-llm-unlimited") && $("#set-llm-unlimited").checked);
+      const maxTokens = unlimited ? 0 : Math.max(512, Math.min(16384, Number($("#set-llm-maxtokens").value) || 4096));
       S().settings.llm = { baseUrl: $("#set-llm-base").value.trim(), apiKey: keyInput || api.storedLlmKey, model: $("#set-llm-model").value.trim(), maxTokens };
       S().settings.prompts = S().settings.prompts || {};
       for (const k of ["system", "settle", "posthumous", "accession"]) {

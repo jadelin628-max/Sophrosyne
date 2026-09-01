@@ -351,6 +351,7 @@
         <button id="llm-key-clear" class="btn ghost" style="width:100%">清除已存密钥</button>
         <label class="field"><span>模型名</span><input id="set-llm-model" type="text" placeholder="gpt-4o-mini" /></label>
         <label class="field"><span>最大输出 token（512–16384）</span><input id="set-llm-maxtokens" type="number" min="512" max="16384" step="256" placeholder="4096" /></label>
+        <label class="hint"><input id="set-llm-unlimited" type="checkbox" style="width:auto;margin-right:6px" />不限制输出 token（测试用，可能消耗大量额度）</label>
         <p class="hint" id="llm-status"></p>
         <div class="row"><button id="llm-test" class="btn">测试接通</button></div>
         <p class="hint" id="llm-test-result"></p>

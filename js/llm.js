@@ -111,7 +111,18 @@ Sophrosyne.LLM = (function () {
     // 兼容两种写法：Base URL 若已含 /chat/completions 则原样使用，否则拼接
     let url = String(cfg.baseUrl).trim().replace(/\/+$/, "");
     if (!/\/chat\/completions$/.test(url)) url += "/chat/completions";
-    const mt = Math.max(512, Math.min(16384, Number(maxTokens) || 4096));
+    // 输出限额：maxTokens=0 表示「不限制」（省略 max_tokens，交给服务商默认）；正数 clamp 到 512–16384；未配置→4096
+    const raw = Number(maxTokens);
+    const mt = Number.isFinite(raw) ? raw : 4096;
+    const body = {
+      model: cfg.model,
+      messages: [
+        { role: "system", content: prompt(state, "system") },
+        { role: "user", content: userContent },
+      ],
+      temperature: 0.7,
+    };
+    if (mt > 0) body.max_tokens = Math.max(512, Math.min(16384, mt));
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
     let res;
@@ -119,15 +130,7 @@ Sophrosyne.LLM = (function () {
       res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + cfg.apiKey },
-        body: JSON.stringify({
-          model: cfg.model,
-          messages: [
-            { role: "system", content: prompt(state, "system") },
-            { role: "user", content: userContent },
-          ],
-          temperature: 0.7,
-          max_tokens: mt,
-        }),
+        body: JSON.stringify(body),
         signal: ctrl.signal,
       });
     } catch (e) {

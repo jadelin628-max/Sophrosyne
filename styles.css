@@ -152,6 +152,11 @@ textarea { resize: vertical; line-height: 1.5; }
 .modal-card {
   width: 100%; max-width: 460px; background: var(--panel); border: 1px solid var(--gold);
   border-radius: var(--radius); padding: 18px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .modal-card h2 { margin: 0 0 10px; color: var(--gold); font-size: 18px; }
 .context { color: var(--ink-dim); font-size: 13px; }
